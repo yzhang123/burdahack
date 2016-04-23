@@ -17,7 +17,7 @@ define(["require", "exports", "jquery", "socket.io-client"], function (require, 
     var controls;
     var container = document.getElementById("container");
     var entityGroup = new THREE.Group();
-    var mesh_mouse;
+    var mesh_mouses = [];
     var cube_material;
     var mouse_material_open;
     var mouse_material_closed;
@@ -26,9 +26,9 @@ define(["require", "exports", "jquery", "socket.io-client"], function (require, 
     animate();
     function init() {
         var textureLoader = new THREE.TextureLoader();
-        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 110000);
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 11000);
         scene = new THREE.Scene();
-        var geometry = new THREE.SphereGeometry(100000, 60, 40);
+        var geometry = new THREE.SphereGeometry(10000, 60, 40);
         geometry.scale(-1, 1, 1);
         var material = new THREE.MeshBasicMaterial({
             map: textureLoader.load('media/background.jpg')
@@ -40,11 +40,13 @@ define(["require", "exports", "jquery", "socket.io-client"], function (require, 
         });
         mouse_material_open = new THREE.MeshBasicMaterial({
             map: textureLoader.load('media/hand-open.png'),
-            side: THREE.DoubleSide
+            side: THREE.DoubleSide,
+            transparent: true
         });
         mouse_material_closed = new THREE.MeshBasicMaterial({
             map: textureLoader.load('media/hand-closed.png'),
-            side: THREE.DoubleSide
+            side: THREE.DoubleSide,
+            transparent: true
         });
         renderer = new THREE.WebGLRenderer();
         renderer.setPixelRatio(window.devicePixelRatio);
@@ -53,40 +55,47 @@ define(["require", "exports", "jquery", "socket.io-client"], function (require, 
         effect.eyeSeparation = 0;
         effect.setSize(window.innerWidth, window.innerHeight);
         container.appendChild(renderer.domElement);
+        var body = $("body");
         document.addEventListener('mousedown', onDocumentMouseDown, false);
         document.addEventListener('mousemove', onDocumentMouseMove, false);
         document.addEventListener('mouseup', onDocumentMouseUp, false);
-        $("body").on("contextmenu", function (e) { e.preventDefault(); return false; });
-        $("body").keydown(function (e) { if (e.keyCode == 65)
+        body.on("contextmenu", function (e) { e.preventDefault(); return false; });
+        body.keydown(function (e) { if (e.keyCode == 65)
             fakeGestureClose = !fakeGestureClose; });
+        body.on("touchstart", function () { return goFullScreen(); });
         //
         //
         window.addEventListener('resize', onWindowResize, false);
         controls = new THREE.DeviceOrientationControls(camera);
         initDeviceOrientation();
-        mesh_mouse = new THREE.Mesh(new THREE.PlaneGeometry(5, 5), mouse_material_closed);
-        socket.on("kinect-mouse", function (mouse) {
-            var mousePos = new THREE.Vector3(mouse.DX, mouse.DY, mouse.DZ);
-            updateMouse(mousePos, mouse.Gesture);
+        mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5).scale(-1, 1, 1), mouse_material_closed));
+        mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5), mouse_material_closed));
+        socket.on("kinect-mouse", function (mouses) {
+            updateMouse(mouses);
         });
-        updateMouse(new THREE.Vector3(15, 5, 5), "open");
-        scene.add(mesh_mouse);
+        //updateMouse(new THREE.Vector3(15, 5, 5), "open");
+        scene.add(mesh_mouses[0]);
+        scene.add(mesh_mouses[1]);
         // fake world
-        updateWorld({ 0: { pos: { x: 30, y: 0, z: 0 }, xw: 5, yw: 5, zw: 5 } });
+        updateWorld({ 0: { pos: { x: 3, y: 0, z: 0 }, xw: 0.5, yw: 0.5, zw: 0.5 } });
         socket.on("world", updateWorld);
     }
-    function updateMouse(mousePos, mouseMode) {
+    function updateMouse(mouses) {
+        for (var id in mouses) {
+            var mousePos = new THREE.Vector3(mouses[id].DX, mouses[id].DY, mouses[id].DZ);
+            console.log(mousePos);
+            mousePos.x *= 10;
+            mousePos.y *= 10;
+            mousePos.z *= 10;
+            var index = mouses[id].IsLeft ? 0 : 1;
+            if (mouses[id].Gesture == "closed")
+                mesh_mouses[index].material = mouse_material_closed;
+            else
+                mesh_mouses[index].material = mouse_material_open;
+            mesh_mouses[index].position.set(mousePos.x, mousePos.y, mousePos.z);
+            mesh_mouses[index].lookAt(camera.position);
+        }
         //console.log("updateMouse(" + mousePos.toArray() + ", " + mouseMode + ")");
-        var len = mousePos.length();
-        mousePos.x *= 20 / len;
-        mousePos.y *= 20 / len;
-        mousePos.z *= 20 / len;
-        if (mouseMode == "closed")
-            mesh_mouse.material = mouse_material_closed;
-        else
-            mesh_mouse.material = mouse_material_open;
-        mesh_mouse.position.set(mousePos.x, mousePos.y, mousePos.z);
-        mesh_mouse.lookAt(camera.position);
     }
     function updateWorld(world) {
         //console.log("updateWorld(...)");
@@ -125,6 +134,7 @@ define(["require", "exports", "jquery", "socket.io-client"], function (require, 
             case 2:
                 break;
             case 3:
+                goFullScreen();
                 break;
             default:
                 console.log(currentMouseButton);
@@ -166,5 +176,17 @@ define(["require", "exports", "jquery", "socket.io-client"], function (require, 
             camera.lookAt(target);
         }
         effect.render(scene, camera);
+    }
+    function goFullScreen() {
+        var elem = container;
+        if (elem.requestFullScreen) {
+            elem.requestFullScreen();
+        }
+        else if (elem.mozRequestFullScreen) {
+            elem.mozRequestFullScreen();
+        }
+        else if (elem.webkitRequestFullScreen) {
+            elem.webkitRequestFullScreen();
+        }
     }
 });
