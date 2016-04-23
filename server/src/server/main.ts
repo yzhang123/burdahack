@@ -71,6 +71,7 @@ function mult(a: Vector3D, m: number): Vector3D
 	return {x: a.x*m, y: a.y*m, z: a.z*m};
 }
 
+var lastMouse: any = { };
 var dHand0: Vector3D = null;
 var dHand1: Vector3D = null;
 var gesture0: string;
@@ -99,14 +100,41 @@ function update(boxid: string): void
 	}
 }
 
+function transform(data: any): void
+{
+	var p: Vector3D = {x: -data.DZ, y: data.DY, z: data.DX};
+	var len: number = vlength(p);
+	if (len > 1) p = mult(p, 1/len);
+	
+	data.X = null, data.Y = null, data.Z = null;
+
+	if (vlength(p) < 0.1)
+		data.DX = null, data.DY = null, data.DZ = null;
+	else
+		data.DX = p.x, data.DY = p.y, data.DZ = p.z;
+}
+
 function handInput(data: any): void
 {
-	console.log(data.Gesture + " " + data.DX + " " + data.DY + " " + data.DZ);
+	if (data.Confidence == 'low')
+		return;
+
+	transform(data);
+
+	var dHand = {x: data.DX, y: data.DY, z: data.DZ};
+
+	console.log(data);
+	//console.log(data.Gesture + " " + data.DX + " " + data.DY + " " + data.DZ);
 	//console.log(data);
-	console.log(boxes);
+	//console.log(boxes);
+
+	if (data.IsLeft) lastMouse[1] = data;
+	else lastMouse[0] = data;
+
+	if (data.IsLeft) return;
+
 	for (var id in boxes)
     {	
-    	var dHand = {x: data.DX, y: data.DY, z: data.DZ};
     	dHand0 = dHand1; dHand1 = dHand;
     	gesture0 = gesture1; gesture1 = data.Gesture;
 
@@ -139,8 +167,10 @@ io.on('connection', socket =>
     setInterval(() => {
     	if (boxes)
 	    	socket.emit('world', boxes);
-	   	if (dHand1)
-	    	socket.emit('kinect-mouse', dHand1);
+	   	if (lastMouse) {
+	    	console.log(lastMouse);
+	    	socket.emit('kinect-mouse', lastMouse);
+	    }
     }, 1000/40);
 });
 
