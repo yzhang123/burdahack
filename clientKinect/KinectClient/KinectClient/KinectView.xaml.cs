@@ -36,6 +36,8 @@ namespace KinectClient
 
         /// <summary> KinectBodyView object which handles drawing the Kinect bodies to a View box in the UI </summary>
         private KinectBodyView kinectBodyView = null;
+
+        private KinectClientEndpoint endpoint = null;
         
         public KinectView()
         {
@@ -50,6 +52,10 @@ namespace KinectClient
             
             // open the reader for the body frames
             this.bodyFrameReader = this.kinectSensor.BodyFrameSource.OpenReader();
+
+            endpoint = new KinectClientEndpoint();
+
+            endpoint.Connect();
 
             // set the BodyFramedArrived event notifier
             this.bodyFrameReader.FrameArrived += this.Reader_BodyFrameArrived;
@@ -81,6 +87,11 @@ namespace KinectClient
                 this.kinectSensor.IsAvailableChanged -= this.Sensor_IsAvailableChanged;
                 this.kinectSensor.Close();
                 this.kinectSensor = null;
+            }
+
+            if(this.endpoint != null)
+            {
+                this.endpoint.Close();
             }
         }
 
@@ -120,6 +131,14 @@ namespace KinectClient
                     // those body objects will be re-used.
                     bodyFrame.GetAndRefreshBodyData(this.bodies);
                     dataReceived = true;
+
+                    foreach (Body body in this.bodies)
+                    {
+                        if (body.IsTracked)
+                        {
+                            this.endpoint.SendHandUpdate(body);
+                        }
+                    }
                 }
             }
 
