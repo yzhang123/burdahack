@@ -71,6 +71,7 @@ class HandData {
 
 // right, left hand
 var hands: HandData[] = [new HandData(), new HandData()];
+var menuPos: Vector3D = null;
 var currHand: HandData;
 hands[0].id = 0;
 hands[1].id = 1;
@@ -95,6 +96,10 @@ function update(boxid: string): void
 		n = MyMath.mult(n, 30/MyMath.vlength(n)); // normalize at 30
 		boxes[boxid].pos = n;
 	}
+
+	if (menuPos) {
+		var diff: Vector3D = MyMath.vecdiff(currHand.posNow, menuPos);
+	}
 }
 
 function transform(data: any): void
@@ -111,50 +116,56 @@ function transform(data: any): void
 		data.DX = p.x, data.DY = p.y, data.DZ = p.z;
 }
 
-function handInput(data: any): void
-{
-	if (data.Confidence == 'low')
-		return;
-
-	transform(data);
-
-	console.log(data);
-	//console.log(data.Gesture + " " + data.DX + " " + data.DY + " " + data.DZ);
-	//console.log(data);
-	//console.log(boxes);
-
-	var handID: number = 0;
-	if (data.IsLeft) handID = 1;
-
-	lastMouse[handID] = data;
-
-	if (data.IsLeft) return;
-
-	currHand = hands[handID];
-	var dHand = {x: data.DX, y: data.DY, z: data.DZ};
-	currHand.posPrev = currHand.posNow;
-	currHand.posNow = dHand;
-
-	currHand.gesturePrev = currHand.gestureNow;
-	currHand.gestureNow = data.Gesture;
-
-
-
-	if (!(currHand.posPrev && currHand.posNow)) return;
-
-	for (var id in boxes)
-    {
-    	if (currHand.gesturePrev != "closed" && currHand.gestureNow == "closed")
-    		updateStateGrab(id, 1); // grab? grab if grab
-    	if (currHand.gestureNow == "open")
-    		updateStateGrab(id, 2); // release
-
-        update(id);
-    }
-}
 
 io.on('connection', socket =>
 {
+	var handInput = (data: any) =>
+	{
+		if (data.Confidence == 'low')
+			return;
+
+		transform(data);
+
+		console.log(data);
+		//console.log(data.Gesture + " " + data.DX + " " + data.DY + " " + data.DZ);
+		//console.log(data);
+		//console.log(boxes);
+
+		var handID: number = 0;
+		if (data.IsLeft) handID = 1;
+
+		lastMouse[handID] = data;
+
+		currHand = hands[handID];
+		var dHand = {x: data.DX, y: data.DY, z: data.DZ};
+		currHand.posPrev = currHand.posNow;
+		currHand.posNow = dHand;
+
+		currHand.gesturePrev = currHand.gestureNow;
+		currHand.gestureNow = data.Gesture;
+
+
+
+		if (!(currHand.posPrev && currHand.posNow)) return;
+
+		for (var id in boxes)
+	    {
+	    	if (currHand.gestureNow == "closed") {
+		    	if (currHand.gesturePrev != "closed")
+		    		updateStateGrab(id, 1); // grab? grab if grab
+		    } else if (currHand.gestureNow == "open") {
+	    		updateStateGrab(id, 2); // release
+	    	} else if (currHand.gestureNow == "lasso") {
+	    		socket.emit("show-menu");
+	    		menuPos = {x: currHand.posNow.x,
+	    				   y: currHand.posNow.y,
+	    				   z: currHand.posNow.z}
+	    	}
+
+	        update(id);
+	    }
+	}
+
     socket.on('update-device-view', (deviceView: DeviceView) =>
     {
         allViews[deviceView.id] = deviceView;
@@ -168,6 +179,7 @@ io.on('connection', socket =>
     {
     	handInput(data);
     });
+   // socket.on('keyword-input', (keyword: string))
 
     setInterval(() => {
     	if (boxes)
