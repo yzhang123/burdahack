@@ -31,6 +31,14 @@ var io = socketio.listen(server);
 Routing(io, app);
 
 var allViews: { [uid: string]: DeviceView } = { };
+var boxes: { [uid: string]: Box } = { };
+
+boxes[0] = {pos: {x: 30, y: 0, z: 0}, w:10, h:10};
+
+function updateState(box: Box, gesture: string, deltaHand: Vector3D): void
+{
+
+}
 
 io.on('connection', socket =>
 {
@@ -40,8 +48,16 @@ io.on('connection', socket =>
     });
 
     socket.on('hand', (data: any) => {
-        console.log(data);
+        for (var id in boxes)
+        {	
+        	var box = boxes[id];
+        	updateState(box, data.Gesture, <Vector3D>{x: data.DX, y: data.DY, z: data.DZ});
+        }
     });
+
+    setInterval(() => {
+    	socket.emit('world', boxes);
+    }, 1000/40);
 });
 
 console.log("Running on port: " + confAppPort);
