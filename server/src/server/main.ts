@@ -39,6 +39,13 @@ var boxes: { [uid: string]: Box } = { };
 var boxState: { [uid: string]: State } = { };
 
 boxes[0] = {pos: {x: 30, y: 0, z: 0}, xw:10, yw:10, zw: 10};
+boxes[1] = {pos: {x: -30, y: 0, z: 0}, xw:10, yw:10, zw: 10};
+boxes[2] = {pos: {x: 0, y: 0, z: 30}, xw:10, yw:10, zw: 10};
+boxes[3] = {pos: {x: 0, y: 0, z: -30}, xw:10, yw:10, zw: 10};
+boxState[0] = {grabbed: false};
+boxState[1] = {grabbed: false};
+boxState[2] = {grabbed: false};
+boxState[3] = {grabbed: false};
 
 function vcos(a: Vector3D, b: Vector3D): number
 {
@@ -66,31 +73,48 @@ function mult(a: Vector3D, m: number): Vector3D
 
 var dHand0: Vector3D = null;
 var dHand1: Vector3D = null;
+var gesture0: string;
+var gesture1: string;
 
-function updateState(box: Box, gesture: string): void
+// 0 = nothing (leave state as is), 1 = grab, 2 = release-all
+function updateStateGrab(boxid: string, grabAction: number): void
 {
+	var box = boxes[boxid];
 	var hitval: number = vcos(box.pos, dHand0);
-	if (hitval > 0.9 && gesture == "Closed")
+	if (hitval > 0.9 && grabAction == 1)
+		boxState[boxid].grabbed = true;
+
+	if (grabAction == 2)
+		boxState[boxid].grabbed = false;
+}
+
+function update(boxid: string): void
+{
+	if (boxState[boxid].grabbed)
 	{
 		var n: Vector3D = {x: dHand1.x, y: dHand1.y, z: dHand1.z};
 		n = mult(n, 30/vlength(n)); // normalize at 30
-		box.pos = dHand1;
+		boxes[boxid].pos = n;
 	}
 }
 
 function handInput(data: any): void
 {
 	console.log(data.Gesture + " " + data.DX + " " + data.DY + " " + data.DZ);
+	console.log(boxes);
 	for (var id in boxes)
     {	
     	var dHand = {x: data.DX, y: data.DY, z: data.DZ};
-    	dHand0 = dHand1;
-    	dHand1 = dHand;
-
-    	var box = boxes[id];
+    	dHand0 = dHand1; dHand1 = dHand;
+    	gesture0 = gesture1; gesture1 = data.Gesture;
 
     	if (dHand0 && dHand1)
-        	updateState(box, data.Gesture);
+    	{        	
+        	if (gesture0 != "closed" && gesture1 == "closed") updateStateGrab(id, 1); // grab? grab if grab
+        	if (gesture1 == "open") updateStateGrab(id, 2); // release
+        }
+
+        update(id);
     }
 }
 
