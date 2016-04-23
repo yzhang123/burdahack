@@ -1,5 +1,5 @@
 
-var usingDevice = true;
+var usingDevice = false;
 var camera;
 var scene;
 var renderer;
@@ -17,6 +17,10 @@ animate();
 
 
 function init() {
+    
+
+    initDeviceOrientation();
+    
 
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1000 );
 
@@ -82,7 +86,7 @@ function init() {
             cube.add( object );
         }
         else
-        {a
+        {
             scene.add( object );
         }
         
@@ -105,6 +109,15 @@ function init() {
     window.addEventListener( 'resize', onWindowResize, false );
 
 }
+
+function initDeviceOrientation()
+{
+    if (window.DeviceOrientationEvent)
+        window.addEventListener('deviceorientation', function(event) {if (event.beta !== null) usingDevice = true}, false);   
+    
+}
+
+
 
 function onWindowResize() {
 
