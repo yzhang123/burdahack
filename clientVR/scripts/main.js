@@ -1,7 +1,6 @@
 /// <reference path="../../comm/MessageMouse.ts" />
 /// <reference path="../../comm/MessageWorld.ts" />
 define(["require", "exports", "jquery", "socket.io-client"], function (require, exports, $, io) {
-    "use strict";
     var TODO_debugEndpoint = "192.168.180.126:8090";
     var socket = io.connect(TODO_debugEndpoint);
     var usingDevice = false;
@@ -72,7 +71,7 @@ define(["require", "exports", "jquery", "socket.io-client"], function (require, 
         scene.add(mesh_mouse);
         // fake world
         updateWorld({ 0: { pos: { x: 30, y: 0, z: 0 }, xw: 5, yw: 5, zw: 5 } });
-        //socket.on("world", updateWorld);
+        socket.on("world", updateWorld);
     }
     function updateMouse(mousePos, mouseMode) {
         //console.log("updateMouse(" + mousePos.toArray() + ", " + mouseMode + ")");

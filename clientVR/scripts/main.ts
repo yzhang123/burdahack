@@ -91,7 +91,7 @@ function init() {
     
     // fake world
     updateWorld({ 0: { pos: { x: 30, y: 0, z: 0 }, xw: 5, yw: 5, zw: 5 } });
-    //socket.on("world", updateWorld);
+    socket.on("world", updateWorld);
 }
 
 function updateMouse(mousePos : THREE.Vector3, mouseMode : string)

@@ -95,6 +95,7 @@ function update(boxid: string): void
 		var n: Vector3D = {x: dHand1.x, y: dHand1.y, z: dHand1.z};
 		n = mult(n, 30/vlength(n)); // normalize at 30
 		boxes[boxid].pos = n;
+		console.log(vlength(n));
 	}
 }
 
@@ -134,8 +135,10 @@ io.on('connection', socket =>
     });
 
     setInterval(() => {
-    	socket.emit('world', boxes);
-    	socket.emit('kinect-mouse', dHand1);
+    	if (boxes)
+	    	socket.emit('world', boxes);
+	   	if (dHand1)
+	    	socket.emit('kinect-mouse', dHand1);
     }, 1000/40);
 });
 
