@@ -4,6 +4,7 @@ define(["require", "exports", "jquery", "socket.io-client"], function (require, 
     "use strict";
     var TODO_debugEndpoint = "192.168.180.126:8090";
     var socket = io.connect(TODO_debugEndpoint);
+    var originRotation = 0;
     var usingDevice = false;
     var camera;
     var scene;
@@ -26,9 +27,9 @@ define(["require", "exports", "jquery", "socket.io-client"], function (require, 
     animate();
     function init() {
         var textureLoader = new THREE.TextureLoader();
-        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 110000);
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 11000);
         scene = new THREE.Scene();
-        var geometry = new THREE.SphereGeometry(100000, 60, 40);
+        var geometry = new THREE.SphereGeometry(10000, 60, 40);
         geometry.scale(-1, 1, 1);
         var material = new THREE.MeshBasicMaterial({
             map: textureLoader.load('media/background.jpg')
@@ -68,8 +69,8 @@ define(["require", "exports", "jquery", "socket.io-client"], function (require, 
         window.addEventListener('resize', onWindowResize, false);
         controls = new THREE.DeviceOrientationControls(camera);
         initDeviceOrientation();
-        mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(5, 5).scale(-1, 1, 1), mouse_material_closed));
-        mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(5, 5), mouse_material_closed));
+        mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5).scale(-1, 1, 1), mouse_material_closed));
+        mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5), mouse_material_closed));
         socket.on("kinect-mouse", function (mouses) {
             updateMouse(mouses);
         });
@@ -77,18 +78,16 @@ define(["require", "exports", "jquery", "socket.io-client"], function (require, 
         scene.add(mesh_mouses[0]);
         scene.add(mesh_mouses[1]);
         // fake world
-        updateWorld({ 0: { pos: { x: 30, y: 0, z: 0 }, xw: 5, yw: 5, zw: 5 } });
+        updateWorld({ 0: { pos: { x: 3, y: 0, z: 0 }, xw: 0.5, yw: 0.5, zw: 0.5 } });
         socket.on("world", updateWorld);
     }
     function updateMouse(mouses) {
-        //console.log("updateMouse(" + mousePos.toArray() + ", " + mouseMode + ")");
         for (var id in mouses) {
-            var mousePos = new THREE.Vector3(mouses[id].DX, mouses[id].DY, mouses[id].DY);
-            var len = mousePos.length();
-            var fac = 20 / len;
-            mousePos.x *= fac;
-            mousePos.y *= fac;
-            mousePos.z *= fac;
+            var mousePos = new THREE.Vector3(mouses[id].DX, mouses[id].DY, mouses[id].DZ);
+            console.log(mousePos);
+            mousePos.x *= 10;
+            mousePos.y *= 10;
+            mousePos.z *= 10;
             var index = mouses[id].IsLeft ? 0 : 1;
             if (mouses[id].Gesture == "closed")
                 mesh_mouses[index].material = mouse_material_closed;
@@ -173,13 +172,14 @@ define(["require", "exports", "jquery", "socket.io-client"], function (require, 
         else {
             lat = Math.max(-85, Math.min(85, lat));
             phi = THREE.Math.degToRad(90 - lat);
-            theta = THREE.Math.degToRad(lon);
+            theta = THREE.Math.degToRad(lon - originRotation);
             var target = new THREE.Vector3(500 * Math.sin(phi) * Math.cos(theta), 500 * Math.cos(phi), 500 * Math.sin(phi) * Math.sin(theta));
             camera.lookAt(target);
         }
         effect.render(scene, camera);
     }
     function goFullScreen() {
+        originRotation = lon;
         var elem = container;
         if (elem.requestFullScreen) {
             elem.requestFullScreen();
