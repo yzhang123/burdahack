@@ -238,7 +238,7 @@ namespace Microsoft.Samples.Kinect.DiscreteGestureBasics
                             var lhp = joints[JointType.HandLeft].Position;
                             var rhp = joints[JointType.HandRight].Position;
 
-                            var lht = new FormattedText(lhp.X.ToString("0.00") + ", " + lhp.Y.ToString("0.00") + ", " + lhp.Z.ToString("0.00"), System.Globalization.CultureInfo.CurrentCulture, 
+                            var lht = new FormattedText(lhp.X.ToString("0.00") + ", " + lhp.Y.ToString("0.00") + ", " + lhp.Z.ToString("0.00"), System.Globalization.CultureInfo.CurrentCulture,
                                 FlowDirection.LeftToRight, new Typeface("Verdana"), 16, Brushes.White);
 
                             var rht = new FormattedText(rhp.X.ToString("0.00") + ", " + rhp.Y.ToString("0.00") + ", " + rhp.Z.ToString("0.00"), System.Globalization.CultureInfo.CurrentCulture,
