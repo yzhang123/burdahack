@@ -69,11 +69,15 @@ function init() {
     effect.eyeSeparation = 0;
     effect.setSize( window.innerWidth, window.innerHeight );
     container.appendChild( renderer.domElement );
+    
+    var body = $("body");
+    
     document.addEventListener( 'mousedown', onDocumentMouseDown, false );
     document.addEventListener( 'mousemove', onDocumentMouseMove, false );
     document.addEventListener( 'mouseup', onDocumentMouseUp, false );
-    $("body").on("contextmenu", e => { e.preventDefault(); return false; });
-    $("body").keydown(e => { if (e.keyCode == 65) fakeGestureClose = !fakeGestureClose; });
+    body.on("contextmenu", e => { e.preventDefault(); return false; });
+    body.keydown(e => { if (e.keyCode == 65) fakeGestureClose = !fakeGestureClose; });
+    body.on("touchstart", () => goFullScreen());
     //
     
     //
@@ -97,11 +101,11 @@ function init() {
 
 function updateMouse(mousePos : THREE.Vector3, mouseMode : string)
 {
-    //console.log("updateMouse(" + mousePos.toArray() + ", " + mouseMode + ")");
-    var len =  mousePos.length();
-    mousePos.x *= 20 / len;
-    mousePos.y *= 20 / len;
-    mousePos.z *= 20 / len;
+    console.log("updateMouse(" + mousePos.toArray() + ", " + mouseMode + ")");
+    var fac =  20 / mousePos.length();
+    mousePos.x *= fac;
+    mousePos.y *= fac;
+    mousePos.z *= fac;
     if (mouseMode == "closed")
         mesh_mouse.material =  mouse_material_closed;
     else
@@ -153,7 +157,7 @@ function onDocumentMouseDown( event : MouseEvent ) {
         case 2: //middle
             break;
         case 3: //right
-            
+            goFullScreen();
             break;
         default:
             console.log(currentMouseButton);
@@ -202,4 +206,18 @@ function update() {
         camera.lookAt( target );
     }
     effect.render( scene, camera );
+}
+
+
+
+function goFullScreen()
+{
+    var elem : any = container;
+    if (elem.requestFullScreen) {
+        elem.requestFullScreen();
+    } else if (elem.mozRequestFullScreen) {
+        elem.mozRequestFullScreen();
+    } else if (elem.webkitRequestFullScreen) {
+        elem.webkitRequestFullScreen();
+    }
 }
