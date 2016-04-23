@@ -85,7 +85,7 @@ function init() {
     mesh_mouse = new THREE.Mesh(new THREE.PlaneGeometry(5, 5), mouse_material_closed);
     socket.on("kinect-mouse", (mouse : MessageMouse) => {
         var mousePos = new THREE.Vector3(mouse.DX, mouse.DY, mouse.DZ);
-        //updateMouse(mousePos, mouse.Gesture);
+        updateMouse(mousePos, mouse.Gesture);
     });
     updateMouse(new THREE.Vector3(15, 5, 5), "open");
     scene.add(mesh_mouse);

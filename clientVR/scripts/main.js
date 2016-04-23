@@ -25,24 +25,25 @@ define(["require", "exports", "jquery", "socket.io-client"], function (require, 
     init();
     animate();
     function init() {
+        var textureLoader = new THREE.TextureLoader();
         camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 110000);
         scene = new THREE.Scene();
         var geometry = new THREE.SphereGeometry(100000, 60, 40);
         geometry.scale(-1, 1, 1);
         var material = new THREE.MeshBasicMaterial({
-            map: new THREE.TextureLoader().load('media/background.jpg')
+            map: textureLoader.load('media/background.jpg')
         });
         var mesh = new THREE.Mesh(geometry, material);
         scene.add(mesh);
         cube_material = new THREE.MeshBasicMaterial({
-            map: new THREE.TextureLoader().load('media/crate.gif')
+            map: textureLoader.load('media/crate.gif')
         });
         mouse_material_open = new THREE.MeshBasicMaterial({
-            map: new THREE.TextureLoader().load('media/hand-open.png'),
+            map: textureLoader.load('media/hand-open.png'),
             side: THREE.DoubleSide
         });
         mouse_material_closed = new THREE.MeshBasicMaterial({
-            map: new THREE.TextureLoader().load('media/hand-closed.png'),
+            map: textureLoader.load('media/hand-closed.png'),
             side: THREE.DoubleSide
         });
         renderer = new THREE.WebGLRenderer();
@@ -66,7 +67,7 @@ define(["require", "exports", "jquery", "socket.io-client"], function (require, 
         mesh_mouse = new THREE.Mesh(new THREE.PlaneGeometry(5, 5), mouse_material_closed);
         socket.on("kinect-mouse", function (mouse) {
             var mousePos = new THREE.Vector3(mouse.DX, mouse.DY, mouse.DZ);
-            //updateMouse(mousePos, mouse.Gesture);
+            updateMouse(mousePos, mouse.Gesture);
         });
         updateMouse(new THREE.Vector3(15, 5, 5), "open");
         scene.add(mesh_mouse);
