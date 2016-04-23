@@ -4,6 +4,7 @@ define(["require", "exports", "jquery", "socket.io-client"], function (require, 
     "use strict";
     var TODO_debugEndpoint = "192.168.180.126:8090";
     var socket = io.connect(TODO_debugEndpoint);
+    var originRotation = 0;
     var usingDevice = false;
     var camera;
     var scene;
@@ -171,13 +172,14 @@ define(["require", "exports", "jquery", "socket.io-client"], function (require, 
         else {
             lat = Math.max(-85, Math.min(85, lat));
             phi = THREE.Math.degToRad(90 - lat);
-            theta = THREE.Math.degToRad(lon);
+            theta = THREE.Math.degToRad(lon - originRotation);
             var target = new THREE.Vector3(500 * Math.sin(phi) * Math.cos(theta), 500 * Math.cos(phi), 500 * Math.sin(phi) * Math.sin(theta));
             camera.lookAt(target);
         }
         effect.render(scene, camera);
     }
     function goFullScreen() {
+        originRotation = lon;
         var elem = container;
         if (elem.requestFullScreen) {
             elem.requestFullScreen();

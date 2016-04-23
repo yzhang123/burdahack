@@ -11,6 +11,7 @@ import io = require("socket.io-client");
 var TODO_debugEndpoint = "192.168.180.126:8090";
 var socket: SocketIOClient.Socket = io.connect(TODO_debugEndpoint);
 
+var originRotation: number = 0;
 var usingDevice = false;
 var camera : THREE.PerspectiveCamera;
 var scene : THREE.Scene;
@@ -205,7 +206,7 @@ function update() {
     {
         lat = Math.max( - 85, Math.min( 85, lat ) );
         phi = THREE.Math.degToRad( 90 - lat );
-        theta = THREE.Math.degToRad( lon );
+        theta = THREE.Math.degToRad( lon - originRotation );
         var target = new THREE.Vector3( 
             500 * Math.sin( phi ) * Math.cos( theta ),
             500 * Math.cos( phi ),
@@ -220,6 +221,7 @@ function update() {
 
 function goFullScreen()
 {
+    originRotation = lon;
     var elem : any = container;
     if (elem.requestFullScreen) {
         elem.requestFullScreen();
