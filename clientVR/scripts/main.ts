@@ -109,7 +109,7 @@ function init() {
     socket.on("world", updateWorld);
     socket.on("show-menu", openMenu);
     socket.on("hide-menu", closeMenu);
-    openMenu();
+    //openMenu();
 }
 
 // use current right mouse
@@ -118,6 +118,7 @@ function openMenu()
     scene.add(mesh_menu);
     mesh_menu.position.set(mouse_positions[1].x, mouse_positions[1].y, mouse_positions[1].z);
     mesh_menu.lookAt(camera.position);
+    setTimeout( closeMenu, 0, 5 );
 }
 
 function closeMenu()
