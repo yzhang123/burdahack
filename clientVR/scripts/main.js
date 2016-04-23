@@ -85,6 +85,8 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         // fake world
         updateWorld({ 0: { pos: { x: 3, y: 0, z: 0 }, xw: 0.5, yw: 0.5, zw: 0.5 } });
         socket.on("world", updateWorld);
+        socket.on("show-menu", openMenu);
+        socket.on("hide-menu", closeMenu);
         openMenu();
     }
     // use current right mouse
