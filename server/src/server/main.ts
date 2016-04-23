@@ -102,6 +102,7 @@ function update(boxid: string): void
 function handInput(data: any): void
 {
 	console.log(data.Gesture + " " + data.DX + " " + data.DY + " " + data.DZ);
+	//console.log(data);
 	console.log(boxes);
 	for (var id in boxes)
     {	
@@ -127,6 +128,7 @@ io.on('connection', socket =>
     });
 
     socket.on('hand', (data: any) => {
+    	data = JSON.parse(data);
         handInput(data);
     });
     socket.on('mouse', (data: any) =>
