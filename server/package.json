@@ -1,0 +1,30 @@
+{
+  "name": "TheMenu",
+  "version": "0.1.0",
+  "private": true,
+  "main": "build/server/server/main.js",
+  "scripts": {
+    "start": "node build/server/main.js",
+    "install": "tsc @tscServer.txt"
+  },
+  "dependencies": {
+    "async": "*",
+    "bcryptjs": "*",
+    "body-parser": "1.13.3",
+    "express": "~4.9.7",
+    "express-handlebars": "~1.1.0",
+    "express-session": "^1.11.3",
+    "express-socket.io-session": "1.3.1",
+    "geocoder": "*",
+    "jquery": "1.11.2",
+    "moment": "*",
+    "multer": "1.0.3",
+    "socket.io": "^1.1.0",
+    "valid-url": "*",
+    "ejs": "*",
+    "twitter": "*",
+    "open-graph": "*",
+    "cookie-session": "*",
+    "connect-mongo": "*"
+  }
+}

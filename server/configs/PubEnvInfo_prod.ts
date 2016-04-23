@@ -1,0 +1,1 @@
+export var URL: string = "http://evymenu.com/";
