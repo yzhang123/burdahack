@@ -109,7 +109,7 @@ function init() {
     socket.on("world", updateWorld);
     socket.on("show-menu", openMenu);
     socket.on("hide-menu", closeMenu);
-    openMenu();
+    //openMenu();
 }
 
 // use current right mouse
