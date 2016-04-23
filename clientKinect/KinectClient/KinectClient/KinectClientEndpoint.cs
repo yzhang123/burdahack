@@ -26,7 +26,7 @@ namespace KinectClient
     }
     class KinectClientEndpoint
     {
-        public const string DefaultEndpoint = "http://DAMIRS_COOLE_IP";
+        public const string DefaultEndpoint = "http://192.168.173.101:8090";
         private Socket socket;
 
         public KinectClientEndpoint()
@@ -50,8 +50,8 @@ namespace KinectClient
             HandUpdate leftUpdate = Create(body.Joints[JointType.HandLeft], body.Joints[JointType.Head], body.HandLeftState, true, body.HandLeftConfidence, (int)body.TrackingId);
             HandUpdate rightUpdate = Create(body.Joints[JointType.HandRight], body.Joints[JointType.Head], body.HandRightState, true, body.HandRightConfidence, (int)body.TrackingId);
 
-            socket.Emit(JsonConvert.SerializeObject(leftUpdate));
-            socket.Emit(JsonConvert.SerializeObject(rightUpdate));
+            socket.Emit("hand", JsonConvert.SerializeObject(leftUpdate));
+            socket.Emit("hand", JsonConvert.SerializeObject(rightUpdate));
         }
 
         public void Close()

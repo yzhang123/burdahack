@@ -25,14 +25,16 @@ var controls : any;
 var container = document.getElementById("container");
 var entityGroup = new THREE.Group();
 
+var fakeGestureClose = false;
+
 init();
 animate();
 
 
 function init() {
-    camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1100 );
+    camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 110000 );
     scene = new THREE.Scene();
-    var geometry = new THREE.SphereGeometry( 500, 60, 40 );
+    var geometry = new THREE.SphereGeometry( 100000, 60, 40 );
     geometry.scale( - 1, 1, 1 );
     var material = new THREE.MeshBasicMaterial( {
         map: new THREE.TextureLoader().load( 'media/background.jpg')
@@ -56,6 +58,8 @@ function init() {
     document.addEventListener( 'mousedown', onDocumentMouseDown, false );
     document.addEventListener( 'mousemove', onDocumentMouseMove, false );
     document.addEventListener( 'mouseup', onDocumentMouseUp, false );
+    $("body").on("contextmenu", e => { e.preventDefault(); return false; });
+    $("body").keydown(e => { if (e.keyCode == 65) fakeGestureClose = !fakeGestureClose; });
     //
     
     //
@@ -63,19 +67,24 @@ function init() {
     controls = new THREE.DeviceOrientationControls( camera );
     initDeviceOrientation(); 
     
-    socket.on("world", (world : MessageWorld) => {
-        scene.remove(entityGroup);
-        entityGroup = new THREE.Group(); 
-        for (var id in world)
-        {
-            var entity = world[id];
-            var cube = new THREE.BoxBufferGeometry(entity.xw, entity.yw, entity.zw);
-            var mesh_cube = new THREE.Mesh( cube, cube_material ); 
-            mesh_cube.position.set(entity.pos.x, entity.pos.y, entity.pos.z); 
-            entityGroup.add(mesh_cube);
-        }
-        scene.add(entityGroup);
-    });
+    // fake world
+    updateWorld({ 0: { pos: { x: 30, y: 0, z: 0 }, xw: 5, yw: 5, zw: 5 } });
+    //socket.on("world", updateWorld);
+}
+
+function updateWorld(world : MessageWorld)
+{
+    scene.remove(entityGroup);
+    entityGroup = new THREE.Group(); 
+    for (var id in world)
+    {
+        var entity = world[id];
+        var cube = new THREE.BoxBufferGeometry(entity.xw, entity.yw, entity.zw);
+        var mesh_cube = new THREE.Mesh( cube, cube_material );
+        mesh_cube.position.set(entity.pos.x, entity.pos.y, entity.pos.z);
+        entityGroup.add(mesh_cube);
+    }
+    scene.add(entityGroup);
 }
 
 function initDeviceOrientation()
@@ -102,6 +111,9 @@ function onDocumentMouseDown( event : MouseEvent ) {
             break;
         case 2: //middle
             break;
+        case 3: //right
+            
+            break;
         default:
             console.log(currentMouseButton);
     }
@@ -114,9 +126,9 @@ function onDocumentMouseMove( event : MouseEvent ) {
             lat = ( event.clientY - onMouseDownMouseY ) * 0.1 + onMouseDownLat;
             break;
         case 2: 
-            var v = new THREE.Vector3( event.clientX / container.clientWidth - 0.5, event.clientY / container.clientHeight - 0.5, -1 );
+            var v = new THREE.Vector3( event.clientX / container.clientWidth - 0.5, -(event.clientY / container.clientHeight - 0.5), -1 );
             v.applyQuaternion( camera.quaternion );
-            socket.emit("mouse", <MessageMouse>{ DX: v.x, DY: v.y, DZ: v.z, Gestrure: "open" });
+            socket.emit("mouse", <MessageMouse>{ DX: v.x, DY: v.y, DZ: v.z, Gesture: fakeGestureClose ? "closed" : "open" });
             break;
     }
 }
