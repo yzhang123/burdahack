@@ -1,6 +1,6 @@
 /// <reference path="../../comm/MessageMouse.ts" />
 /// <reference path="../../comm/MessageWorld.ts" />
-define(["require", "exports", "jquery", "socket.io-client"], function (require, exports, $, io) {
+define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], function (require, exports, $, io, entityRenderer_1) {
     "use strict";
     var TODO_debugEndpoint = "192.168.180.126:8090";
     var socket = io.connect(TODO_debugEndpoint);
@@ -47,13 +47,14 @@ define(["require", "exports", "jquery", "socket.io-client"], function (require, 
             side: THREE.DoubleSide,
             transparent: true
         });
+        cube_material = entityRenderer_1.createMaterial("<p style='color:red'>HALLO</p>", 64, 64);
         mouse_material_closed = new THREE.MeshBasicMaterial({
             map: textureLoader.load('media/hand-closed.png'),
             side: THREE.DoubleSide,
             transparent: true
         });
         menu_material = new THREE.MeshBasicMaterial({
-            map: textureLoader.load('media/menu.png'),
+            map: textureLoader.load('media/menu1.png'),
             transparent: true
         });
         renderer = new THREE.WebGLRenderer();
