@@ -24,12 +24,11 @@ var effect : any;
 var controls : any;
 var container = document.getElementById("container");
 var entityGroup = new THREE.Group();
-var mesh_mouse : THREE.Mesh;
+var mesh_mouses : THREE.Mesh[] = [];
 
 var cube_material : THREE.MeshBasicMaterial;
-var mouse_material_open : THREE.MeshBasicMaterial;
-var mouse_material_closed : THREE.MeshBasicMaterial;
-
+var mouse_material_open : THREE.Material;
+var mouse_material_closed : THREE.Material;
 var fakeGestureClose = false;
 
 init();
@@ -52,11 +51,13 @@ function init() {
     } );
     mouse_material_open = new THREE.MeshBasicMaterial( {
         map: textureLoader.load( 'media/hand-open.png'),
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
+        transparent : true
     } );
     mouse_material_closed = new THREE.MeshBasicMaterial( {
         map: textureLoader.load( 'media/hand-closed.png'),
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
+        transparent : true
     } );
     
     
@@ -69,11 +70,15 @@ function init() {
     effect.eyeSeparation = 0;
     effect.setSize( window.innerWidth, window.innerHeight );
     container.appendChild( renderer.domElement );
+    
+    var body = $("body");
+    
     document.addEventListener( 'mousedown', onDocumentMouseDown, false );
     document.addEventListener( 'mousemove', onDocumentMouseMove, false );
     document.addEventListener( 'mouseup', onDocumentMouseUp, false );
-    $("body").on("contextmenu", e => { e.preventDefault(); return false; });
-    $("body").keydown(e => { if (e.keyCode == 65) fakeGestureClose = !fakeGestureClose; });
+    body.on("contextmenu", e => { e.preventDefault(); return false; });
+    body.keydown(e => { if (e.keyCode == 65) fakeGestureClose = !fakeGestureClose; });
+    body.on("touchstart", () => goFullScreen());
     //
     
     //
@@ -82,32 +87,41 @@ function init() {
     initDeviceOrientation(); 
     
    
-    mesh_mouse = new THREE.Mesh(new THREE.PlaneGeometry(5, 5), mouse_material_closed);
-    socket.on("kinect-mouse", (mouse : MessageMouse) => {
-        var mousePos = new THREE.Vector3(mouse.DX, mouse.DY, mouse.DZ);
-        updateMouse(mousePos, mouse.Gesture);
+    mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(5, 5).scale(-1, 1, 1), mouse_material_closed));
+    mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(5, 5), mouse_material_closed));
+    socket.on("kinect-mouse", (mouses : MessageMouses) => {
+        updateMouse(mouses);
     });
-    updateMouse(new THREE.Vector3(15, 5, 5), "open");
-    scene.add(mesh_mouse);
+    //updateMouse(new THREE.Vector3(15, 5, 5), "open");
+    scene.add(mesh_mouses[0]);
+    scene.add(mesh_mouses[1]);
     
     // fake world
     updateWorld({ 0: { pos: { x: 30, y: 0, z: 0 }, xw: 5, yw: 5, zw: 5 } });
     socket.on("world", updateWorld);
 }
 
-function updateMouse(mousePos : THREE.Vector3, mouseMode : string)
+function updateMouse(mouses : MessageMouses)
 {
     //console.log("updateMouse(" + mousePos.toArray() + ", " + mouseMode + ")");
-    var len =  mousePos.length();
-    mousePos.x *= 20 / len;
-    mousePos.y *= 20 / len;
-    mousePos.z *= 20 / len;
-    if (mouseMode == "closed")
-        mesh_mouse.material =  mouse_material_closed;
-    else
-        mesh_mouse.material = mouse_material_open;
-    mesh_mouse.position.set(mousePos.x, mousePos.y, mousePos.z);
-    mesh_mouse.lookAt(camera.position);
+    for (var id in mouses)
+    {
+        var mousePos = new THREE.Vector3(mouses[id].DX, mouses[id].DY, mouses[id].DY);
+        var len =  mousePos.length();
+        var fac =  20 / len;
+        mousePos.x *= fac;
+        mousePos.y *= fac;
+        mousePos.z *= fac;
+        var index = mouses[id].IsLeft? 0 : 1; 
+        if (mouses[id].Gesture == "closed")
+            mesh_mouses[index].material =  mouse_material_closed;
+        else
+            mesh_mouses[index].material = mouse_material_open;
+        mesh_mouses[index].position.set(mousePos.x, mousePos.y, mousePos.z);
+        mesh_mouses[index].lookAt(camera.position);
+    }
+    //console.log("updateMouse(" + mousePos.toArray() + ", " + mouseMode + ")");
+
 }
 
 
@@ -153,7 +167,7 @@ function onDocumentMouseDown( event : MouseEvent ) {
         case 2: //middle
             break;
         case 3: //right
-            
+            goFullScreen();
             break;
         default:
             console.log(currentMouseButton);
@@ -202,4 +216,18 @@ function update() {
         camera.lookAt( target );
     }
     effect.render( scene, camera );
+}
+
+
+
+function goFullScreen()
+{
+    var elem : any = container;
+    if (elem.requestFullScreen) {
+        elem.requestFullScreen();
+    } else if (elem.mozRequestFullScreen) {
+        elem.mozRequestFullScreen();
+    } else if (elem.webkitRequestFullScreen) {
+        elem.webkitRequestFullScreen();
+    }
 }

@@ -5,3 +5,4 @@ interface MessageMouse
     DZ : number;
     Gesture : string;
 }
+type MessageMouses = { [id: number]: MessageMouse }
