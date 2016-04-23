@@ -235,13 +235,14 @@ namespace Microsoft.Samples.Kinect.DiscreteGestureBasics
                             this.DrawHand(body.HandLeftState, jointPoints[JointType.HandLeft], dc);
                             this.DrawHand(body.HandRightState, jointPoints[JointType.HandRight], dc);
 
+                            var hp = joints[JointType.Head].Position;
                             var lhp = joints[JointType.HandLeft].Position;
                             var rhp = joints[JointType.HandRight].Position;
 
-                            var lht = new FormattedText(lhp.X.ToString("0.00") + ", " + lhp.Y.ToString("0.00") + ", " + lhp.Z.ToString("0.00"), System.Globalization.CultureInfo.CurrentCulture,
+                            var lht = new FormattedText((lhp.X - hp.X).ToString("0.00") + ", " + (lhp.Y - hp.Y).ToString("0.00") + ", " + (lhp.Z - hp.Z).ToString("0.00"), System.Globalization.CultureInfo.CurrentCulture,
                                 FlowDirection.LeftToRight, new Typeface("Verdana"), 16, Brushes.White);
 
-                            var rht = new FormattedText(rhp.X.ToString("0.00") + ", " + rhp.Y.ToString("0.00") + ", " + rhp.Z.ToString("0.00"), System.Globalization.CultureInfo.CurrentCulture,
+                            var rht = new FormattedText((rhp.X - hp.X).ToString("0.00") + ", " + (rhp.Y - hp.Y).ToString("0.00") + ", " + (rhp.Z - hp.Z).ToString("0.00"), System.Globalization.CultureInfo.CurrentCulture,
                                 FlowDirection.LeftToRight, new Typeface("Verdana"), 16, Brushes.White);
 
                             dc.DrawText(lht, jointPoints[JointType.HandLeft]);

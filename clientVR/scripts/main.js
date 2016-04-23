@@ -2,8 +2,12 @@
 var usingDevice = false;
 var camera, scene, renderer;
 var isUserInteracting = false, onMouseDownMouseX = 0, onMouseDownMouseY = 0, lon = 0, onMouseDownLon = 0, lat = 0, onMouseDownLat = 0, phi = 0, theta = 0;
+<<<<<<< HEAD
 var mesh_cube;
 var boxes = ["", "", ""];
+=======
+var effect;
+>>>>>>> 68ea695f6bad3b1466e4660b45f3429564f27dc7
 init();
 animate();
 function init() {
@@ -31,7 +35,10 @@ function init() {
     }
     renderer = new THREE.WebGLRenderer();
     renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    effect = new THREE.StereoEffect(renderer);
+    //effect = renderer;
+    effect.eyeSeparation = 0;
+    effect.setSize(window.innerWidth, window.innerHeight);
     container.appendChild(renderer.domElement);
     document.addEventListener('mousedown', onDocumentMouseDown, false);
     document.addEventListener('mousemove', onDocumentMouseMove, false);
@@ -50,7 +57,7 @@ function initDeviceOrientation() {
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    effect.setSize(window.innerWidth, window.innerHeight);
 }
 function onDocumentMouseDown(event) {
     event.preventDefault();
@@ -92,9 +99,5 @@ function update() {
         camera.target.z = 500 * Math.sin(phi) * Math.sin(theta);
         camera.lookAt(camera.target);
     }
-    /*
-    // distortion
-    camera.position.copy( camera.target ).negate();
-    */
-    renderer.render(scene, camera);
+    effect.render(scene, camera);
 }
