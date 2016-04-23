@@ -38,6 +38,10 @@ io.on('connection', socket =>
     {
         allViews[deviceView.id] = deviceView;
     });
+
+    socket.on('hand', (data: any) => {
+        console.log(data);
+    });
 });
 
 console.log("Running on port: " + confAppPort);
