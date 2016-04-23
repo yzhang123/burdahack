@@ -1,6 +1,6 @@
 /// <reference path="decl/three.d.ts" />
 
-var usingDevice = true;
+var usingDevice = false;
 var camera, scene, renderer;
 var isUserInteracting = false,
 onMouseDownMouseX = 0, onMouseDownMouseY = 0,
