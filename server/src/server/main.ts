@@ -58,11 +58,22 @@ class HandData {
 	public posNow: Vector3D = null;
 	public gesturePrev: string;
 	public gestureNow: string;
+
+	public debug(): void
+	{
+		console.log(this.id);
+		if (this.posPrev) console.log("pprv: " + this.posPrev.x + " " + this.posPrev.y + " " + this.posPrev.z);
+		if (this.posNow) console.log("pnow: " + this.posNow.x + " " + this.posNow.y + " " + this.posNow.z);
+		if (this.gesturePrev) console.log("gprev" + this.gesturePrev);
+		if (this.gestureNow) console.log("gnow: " + this.gestureNow);
+	}
 }
 
 // right, left hand
 var hands: HandData[] = [new HandData(), new HandData()];
 var currHand: HandData;
+hands[0].id = 0;
+hands[1].id = 1;
 
 // 0 = nothing (leave state as is), 1 = grab, 2 = release-all
 function updateStateGrab(boxid: string, grabAction: number): void
@@ -127,10 +138,12 @@ function handInput(data: any): void
 	currHand.gesturePrev = currHand.gestureNow;
 	currHand.gestureNow = data.Gesture;
 
+
+
 	if (!(currHand.posPrev && currHand.posNow)) return;
 
 	for (var id in boxes)
-    {	
+    {
     	if (currHand.gesturePrev != "closed" && currHand.gestureNow == "closed")
     		updateStateGrab(id, 1); // grab? grab if grab
     	if (currHand.gestureNow == "open")
@@ -160,7 +173,6 @@ io.on('connection', socket =>
     	if (boxes)
 	    	socket.emit('world', boxes);
 	   	if (lastMouse) {
-	    	console.log(lastMouse);
 	    	socket.emit('kinect-mouse', lastMouse);
 	    }
     }, 1000/40);
