@@ -19,7 +19,6 @@ var confAppPort: number = process.env.PORT || 8090;
 import express = require("express");
 import socketio = require("socket.io");
 import fs = require("fs");
-import mongoose = require("mongoose");
 import async = require('async');
 import multer = require("multer");
 import Routing = require("./Routing");
@@ -29,4 +28,7 @@ var app = express();
 var server = require("http").createServer(app);
 var io = socketio.listen(server);
 
-Routing(io, app, mongoose);
+Routing(io, app);
+
+console.log("Running on port: " + confAppPort);
+server.listen(confAppPort);
