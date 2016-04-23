@@ -37,9 +37,9 @@ animate();
 
 function init() {
     var textureLoader = new THREE.TextureLoader();
-    camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 110000 );
+    camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 11000 );
     scene = new THREE.Scene();
-    var geometry = new THREE.SphereGeometry( 100000, 60, 40 );
+    var geometry = new THREE.SphereGeometry( 10000, 60, 40 );
     geometry.scale( - 1, 1, 1 );
     var material = new THREE.MeshBasicMaterial( {
         map: textureLoader.load( 'media/background.jpg')
@@ -87,8 +87,8 @@ function init() {
     initDeviceOrientation(); 
     
    
-    mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(5, 5).scale(-1, 1, 1), mouse_material_closed));
-    mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(5, 5), mouse_material_closed));
+    mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5).scale(-1, 1, 1), mouse_material_closed));
+    mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5), mouse_material_closed));
     socket.on("kinect-mouse", (mouses : MessageMouses) => {
         updateMouse(mouses);
     });
@@ -97,22 +97,20 @@ function init() {
     scene.add(mesh_mouses[1]);
     
     // fake world
-    updateWorld({ 0: { pos: { x: 30, y: 0, z: 0 }, xw: 5, yw: 5, zw: 5 } });
+    updateWorld({ 0: { pos: { x: 3, y: 0, z: 0 }, xw: 0.5, yw: 0.5, zw: 0.5 } });
     socket.on("world", updateWorld);
 }
 
 function updateMouse(mouses : MessageMouses)
 {
-    //console.log("updateMouse(" + mousePos.toArray() + ", " + mouseMode + ")");
     for (var id in mouses)
     {
-        var mousePos = new THREE.Vector3(mouses[id].DX, mouses[id].DY, mouses[id].DY);
-        var len =  mousePos.length();
-        var fac =  20 / len;
-        mousePos.x *= fac;
-        mousePos.y *= fac;
-        mousePos.z *= fac;
-        var index = mouses[id].IsLeft? 0 : 1; 
+        var mousePos = new THREE.Vector3(mouses[id].DX, mouses[id].DY, mouses[id].DZ);
+        console.log(mousePos); 
+        mousePos.x *= 10;
+        mousePos.y *= 10;
+        mousePos.z *= 10;
+        var index = mouses[id].IsLeft ? 0 : 1; 
         if (mouses[id].Gesture == "closed")
             mesh_mouses[index].material =  mouse_material_closed;
         else
