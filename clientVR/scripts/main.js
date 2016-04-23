@@ -40,11 +40,13 @@ define(["require", "exports", "jquery", "socket.io-client"], function (require, 
         });
         mouse_material_open = new THREE.MeshBasicMaterial({
             map: textureLoader.load('media/hand-open.png'),
-            side: THREE.DoubleSide
+            side: THREE.DoubleSide,
+            transparent: true
         });
         mouse_material_closed = new THREE.MeshBasicMaterial({
             map: textureLoader.load('media/hand-closed.png'),
-            side: THREE.DoubleSide
+            side: THREE.DoubleSide,
+            transparent: true
         });
         renderer = new THREE.WebGLRenderer();
         renderer.setPixelRatio(window.devicePixelRatio);
