@@ -28,6 +28,12 @@ function init() {
     //
     window.addEventListener('resize', onWindowResize, false);
     controls = new THREE.DeviceOrientationControls(camera);
+    initDeviceOrientation();
+}
+function initDeviceOrientation() {
+    if (window.DeviceOrientationEvent)
+        window.addEventListener('deviceorientation', function (event) { if (event.beta !== null)
+            usingDevice = true; }, false);
 }
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;

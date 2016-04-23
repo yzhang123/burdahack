@@ -26,6 +26,7 @@ function init() {
     scene.add( mesh );
     renderer = new THREE.WebGLRenderer();
     renderer.setPixelRatio( window.devicePixelRatio );
+
     renderer.setSize( window.innerWidth, window.innerHeight );
     container.appendChild( renderer.domElement );
     document.addEventListener( 'mousedown', onDocumentMouseDown, false );
@@ -36,7 +37,17 @@ function init() {
     //
     window.addEventListener( 'resize', onWindowResize, false );
     controls = new THREE.DeviceOrientationControls( camera );
+    initDeviceOrientation();
 }
+
+function initDeviceOrientation()
+{
+    if (window.DeviceOrientationEvent)
+        window.addEventListener('deviceorientation', function(event) {if (event.beta !== null) usingDevice = true}, false);   
+    
+}
+
+
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
