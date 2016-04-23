@@ -42,7 +42,6 @@ function init() {
     var cube_material = new THREE.MeshBasicMaterial( {
         map: new THREE.TextureLoader().load( 'media/crate.gif')
     } );
-    scene.add(entityGroup);   
     
     
     renderer = new THREE.WebGLRenderer();
@@ -65,6 +64,8 @@ function init() {
     initDeviceOrientation(); 
     
     socket.on("world", (world : MessageWorld) => {
+        scene.remove(entityGroup);
+        entityGroup = new THREE.Group(); 
         for (var id in world)
         {
             var entity = world[id];
@@ -73,6 +74,7 @@ function init() {
             mesh_cube.position.set(entity.pos.x, entity.pos.y, entity.pos.z); 
             entityGroup.add(mesh_cube);
         }
+        scene.add(entityGroup);
     });
 }
 
@@ -99,7 +101,9 @@ function onDocumentMouseDown( event : MouseEvent ) {
             onMouseDownLat = lat;
             break;
         case 2: //middle
-            
+            var v = new THREE.Vector3( event.clientX / container.clientWidth - 0.5, event.clientY / container.clientHeight - 0.5, -1 );
+            v.applyQuaternion( camera.quaternion );
+            socket.emit("mouse", <MessageMouse>{ DX: v.x, DY: v.y, DZ: v.z, Gestrure: "open" });
             break;
         default:
             console.log(currentMouseButton);

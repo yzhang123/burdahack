@@ -32,7 +32,6 @@ define(["require", "exports", "socket.io-client"], function (require, exports, i
         var cube_material = new THREE.MeshBasicMaterial({
             map: new THREE.TextureLoader().load('media/crate.gif')
         });
-        scene.add(entityGroup);
         renderer = new THREE.WebGLRenderer();
         renderer.setPixelRatio(window.devicePixelRatio);
         effect = new THREE.StereoEffect(renderer);
@@ -49,6 +48,8 @@ define(["require", "exports", "socket.io-client"], function (require, exports, i
         controls = new THREE.DeviceOrientationControls(camera);
         initDeviceOrientation();
         socket.on("world", function (world) {
+            scene.remove(entityGroup);
+            entityGroup = new THREE.Group();
             for (var id in world) {
                 var entity = world[id];
                 var cube = new THREE.BoxBufferGeometry(entity.xw, entity.yw, entity.zw);
@@ -56,6 +57,7 @@ define(["require", "exports", "socket.io-client"], function (require, exports, i
                 mesh_cube.position.set(entity.pos.x, entity.pos.y, entity.pos.z);
                 entityGroup.add(mesh_cube);
             }
+            scene.add(entityGroup);
         });
     }
     function initDeviceOrientation() {
@@ -79,6 +81,9 @@ define(["require", "exports", "socket.io-client"], function (require, exports, i
                 onMouseDownLat = lat;
                 break;
             case 2:
+                var v = new THREE.Vector3(event.clientX / container.clientWidth - 0.5, event.clientY / container.clientHeight - 0.5, -1);
+                v.applyQuaternion(camera.quaternion);
+                socket.emit("mouse", { DX: v.x, DY: v.y, DZ: v.z, Gestrure: "open" });
                 break;
             default:
                 console.log(currentMouseButton);
