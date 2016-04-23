@@ -1,19 +1,28 @@
 /// <reference path="decl/three.d.ts" />
+/// <reference path="decl/require.d.ts" />
+/// <reference path="decl/socket.io-client.d.ts" />
+
+import io = require("socket.io-client");
+var socket: SocketIOClient.Socket = io.connect();
 
 var usingDevice = false;
-var camera, scene, renderer;
-var isUserInteracting = false,
-onMouseDownMouseX = 0, onMouseDownMouseY = 0,
-lon = 0, onMouseDownLon = 0,
-lat = 0, onMouseDownLat = 0,
-phi = 0, theta = 0;
+var camera;
+var scene;
+var renderer;
+var isUserInteracting = false;
+var onMouseDownMouseX = 0, onMouseDownMouseY = 0;
+var lon = 0, onMouseDownLon = 0;
+var lat = 0, onMouseDownLat = 0;
+var phi = 0, theta = 0;
 var effect;
+var controls;
+var container;
+var mesh;
 
 init();
 animate();
 
 function init() {
-    var container, mesh;
     container = document.getElementById( 'container' );
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1100 );
     camera.target = new THREE.Vector3( 0, 0, 0 );
@@ -59,15 +68,15 @@ function onWindowResize() {
 function onDocumentMouseDown( event ) {
     event.preventDefault();
     isUserInteracting = true;
-    onPointerDownPointerX = event.clientX;
-    onPointerDownPointerY = event.clientY;
-    onPointerDownLon = lon;
-    onPointerDownLat = lat;
+    onMouseDownMouseX = event.clientX;
+    onMouseDownMouseY = event.clientY;
+    onMouseDownLon = lon;
+    onMouseDownLat = lat;
 }
 function onDocumentMouseMove( event ) {
     if ( isUserInteracting === true ) {
-        lon = ( onPointerDownPointerX - event.clientX ) * 0.1 + onPointerDownLon;
-        lat = ( event.clientY - onPointerDownPointerY ) * 0.1 + onPointerDownLat;
+        lon = ( onMouseDownMouseX - event.clientX ) * 0.1 + onMouseDownLon;
+        lat = ( event.clientY - onMouseDownMouseY ) * 0.1 + onMouseDownLat;
     }
 }
 function onDocumentMouseUp( event ) {
