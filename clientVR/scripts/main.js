@@ -53,7 +53,7 @@ define(["require", "exports", "jquery", "socket.io-client"], function (require, 
             transparent: true
         });
         menu_material = new THREE.MeshBasicMaterial({
-            map: textureLoader.load('media/menu.png'),
+            map: textureLoader.load('media/menu1.png'),
             transparent: true
         });
         renderer = new THREE.WebGLRenderer();

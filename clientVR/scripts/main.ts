@@ -65,7 +65,7 @@ function init() {
     } );
     
     menu_material = new THREE.MeshBasicMaterial({
-        map : textureLoader.load('media/menu.png'), 
+        map : textureLoader.load('media/menu1.png'), 
         transparent : true 
     });
     renderer = new THREE.WebGLRenderer();
