@@ -1,6 +1,7 @@
 /// <reference path="../../comm/MessageMouse.ts" />
 /// <reference path="../../comm/MessageWorld.ts" />
 define(["require", "exports", "jquery", "socket.io-client"], function (require, exports, $, io) {
+    "use strict";
     var TODO_debugEndpoint = "192.168.180.126:8090";
     var socket = io.connect(TODO_debugEndpoint);
     var usingDevice = false;

@@ -38,23 +38,24 @@ animate();
 
 
 function init() {
+    var textureLoader = new THREE.TextureLoader();
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 110000 );
     scene = new THREE.Scene();
     var geometry = new THREE.SphereGeometry( 100000, 60, 40 );
     geometry.scale( - 1, 1, 1 );
     var material = new THREE.MeshBasicMaterial( {
-        map: new THREE.TextureLoader().load( 'media/background.jpg')
+        map: textureLoader.load( 'media/background.jpg')
     } );
     var mesh = new THREE.Mesh( geometry, material );
     scene.add( mesh );
     cube_material = new THREE.MeshBasicMaterial( {
-        map: new THREE.TextureLoader().load( 'media/crate.gif')
+        map: textureLoader.load( 'media/crate.gif')
     } );
     mouse_material_open = new THREE.MeshBasicMaterial( {
-        map: new THREE.TextureLoader().load( 'media/hand-open.png')
+        map: textureLoader.load( 'media/hand-open.png')
     } );
     mouse_material_closed = new THREE.MeshBasicMaterial( {
-        map: new THREE.TextureLoader().load( 'media/hand-closed.png')
+        map: textureLoader.load( 'media/hand-closed.png')
     } );
     
     
