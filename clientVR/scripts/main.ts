@@ -11,6 +11,8 @@ import io = require("socket.io-client");
 var TODO_debugEndpoint = "192.168.180.126:8090";
 var socket: SocketIOClient.Socket = io.connect(TODO_debugEndpoint);
 
+import { createTexture, createMaterial } from "entityRenderer";
+
 var originRotation: number = 0;
 var usingDevice = false;
 var camera : THREE.PerspectiveCamera;
@@ -55,6 +57,7 @@ function init() {
         side: THREE.DoubleSide,
         transparent : true
     } );
+    cube_material = createMaterial("<p style='color:red'>HALLO</p>",64,64);
     mouse_material_closed = new THREE.MeshBasicMaterial( {
         map: textureLoader.load( 'media/hand-closed.png'),
         side: THREE.DoubleSide,
