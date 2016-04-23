@@ -126,7 +126,7 @@ io.on('connection', socket =>
 
 		transform(data);
 
-		console.log(data);
+		//console.log(data);
 		//console.log(data.Gesture + " " + data.DX + " " + data.DY + " " + data.DZ);
 		//console.log(data);
 		//console.log(boxes);
@@ -148,6 +148,14 @@ io.on('connection', socket =>
 
 		if (!(currHand.posPrev && currHand.posNow)) return;
 
+		if (currHand.gestureNow == "lasso") {
+    		socket.emit("show-menu");
+    		console.log("LASSO");
+    		menuPos = {x: currHand.posNow.x,
+    				   y: currHand.posNow.y,
+    				   z: currHand.posNow.z}
+    	}
+
 		for (var id in boxes)
 	    {
 	    	if (currHand.gestureNow == "closed") {
@@ -155,11 +163,6 @@ io.on('connection', socket =>
 		    		updateStateGrab(id, 1); // grab? grab if grab
 		    } else if (currHand.gestureNow == "open") {
 	    		updateStateGrab(id, 2); // release
-	    	} else if (currHand.gestureNow == "lasso") {
-	    		socket.emit("show-menu");
-	    		menuPos = {x: currHand.posNow.x,
-	    				   y: currHand.posNow.y,
-	    				   z: currHand.posNow.z}
 	    	}
 
 	        update(id);
