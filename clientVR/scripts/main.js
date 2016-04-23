@@ -17,6 +17,8 @@ define(["require", "exports", "socket.io-client"], function (require, exports, i
     var controls;
     var container = document.getElementById("container");
     var entityGroup = new THREE.Group();
+    var mousePos;
+    var mouseMode;
     init();
     animate();
     function init() {
@@ -58,6 +60,10 @@ define(["require", "exports", "socket.io-client"], function (require, exports, i
                 entityGroup.add(mesh_cube);
             }
             scene.add(entityGroup);
+        });
+        socket.on("kinect-mouse", function (mouse) {
+            mousePos = new THREE.Vector3(mouse.DX, mouse.DY, mouse.DZ);
+            mouseMode = mouse.Gestrure;
         });
     }
     function initDeviceOrientation() {

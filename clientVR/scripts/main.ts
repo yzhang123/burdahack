@@ -24,6 +24,8 @@ var effect : any;
 var controls : any;
 var container = document.getElementById("container");
 var entityGroup = new THREE.Group();
+var mousePos : THREE.Vector3;
+var mouseMode : string;
 
 init();
 animate();
@@ -76,6 +78,11 @@ function init() {
         }
         scene.add(entityGroup);
     });
+    
+    socket.on("kinect-mouse", (mouse : MessageMouse) => {
+        mousePos = new THREE.Vector3(mouse.DX, mouse.DY, mouse.DZ);
+        mouseMode = mouse.Gestrure;
+    })
 }
 
 function initDeviceOrientation()
