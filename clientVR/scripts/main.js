@@ -43,6 +43,7 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         var geometry = new THREE.SphereGeometry(10000, 60, 40);
         geometry.scale(-1, 1, 1);
         var material = materialFromImage('media/background.jpg');
+        material.transparent = false;
         var mesh = new THREE.Mesh(geometry, material);
         scene.add(mesh);
         cube_material = materialFromImage('media/crate.gif');
