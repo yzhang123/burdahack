@@ -4,6 +4,7 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
     "use strict";
     var TODO_debugEndpoint = "192.168.180.126:8090";
     var socket = io.connect(TODO_debugEndpoint);
+    var textureLoader = new THREE.TextureLoader();
     var originRotation = 0;
     var usingDevice = false;
     var camera;
@@ -28,35 +29,27 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
     var fakeGestureClose = false;
     init();
     animate();
+    function materialFromImage(url) {
+        return new THREE.MeshBasicMaterial({
+            map: textureLoader.load(url),
+            //side: THREE.DoubleSide,
+            transparent: true
+        });
+        ;
+    }
     function init() {
-        var textureLoader = new THREE.TextureLoader();
-        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 11000);
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.8, 11000);
         scene = new THREE.Scene();
         var geometry = new THREE.SphereGeometry(10000, 60, 40);
         geometry.scale(-1, 1, 1);
-        var material = new THREE.MeshBasicMaterial({
-            map: textureLoader.load('media/background.jpg')
-        });
+        var material = materialFromImage('media/background.jpg');
         var mesh = new THREE.Mesh(geometry, material);
         scene.add(mesh);
-        cube_material = new THREE.MeshBasicMaterial({
-            map: textureLoader.load('media/crate.gif')
-        });
-        mouse_material_open = new THREE.MeshBasicMaterial({
-            map: textureLoader.load('media/hand-open.png'),
-            side: THREE.DoubleSide,
-            transparent: true
-        });
+        cube_material = materialFromImage('media/crate.gif');
+        mouse_material_open = materialFromImage('media/hand-open.png');
+        mouse_material_closed = materialFromImage('media/hand-closed.png');
         cube_material = entityRenderer_1.createMaterial("<p style='color:red'>HALLO</p>", 64, 64);
-        mouse_material_closed = new THREE.MeshBasicMaterial({
-            map: textureLoader.load('media/hand-closed.png'),
-            side: THREE.DoubleSide,
-            transparent: true
-        });
-        menu_material = new THREE.MeshBasicMaterial({
-            map: textureLoader.load('media/menu1.png'),
-            transparent: true
-        });
+        menu_material = materialFromImage('media/menu1.png');
         renderer = new THREE.WebGLRenderer();
         renderer.setPixelRatio(window.devicePixelRatio);
         effect = new THREE.StereoEffect(renderer);
@@ -80,8 +73,8 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         mesh_menu = new THREE.Mesh(new THREE.PlaneBufferGeometry(4, 4), menu_material);
         mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5).scale(-1, 1, 1), mouse_material_closed));
         mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5), mouse_material_closed));
-        mouse_positions.push(new THREE.Vector3(10, 0, 0));
-        mouse_positions.push(new THREE.Vector3(10, 0, 0));
+        mouse_positions.push(new THREE.Vector3(5, 0, 0));
+        mouse_positions.push(new THREE.Vector3(5, 0, 0));
         socket.on("kinect-mouse", function (mouses) {
             updateMouse(mouses);
         });
@@ -126,7 +119,7 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         entityGroup = new THREE.Group();
         for (var id in world) {
             var entity = world[id];
-            var cube = new THREE.BoxBufferGeometry(entity.xw, entity.yw, entity.zw);
+            var cube = new THREE.PlaneBufferGeometry(entity.xw, entity.yw);
             var mesh_cube = new THREE.Mesh(cube, cube_material);
             mesh_cube.position.set(entity.pos.x, entity.pos.y, entity.pos.z);
             mesh_cube.lookAt(camera.position);
