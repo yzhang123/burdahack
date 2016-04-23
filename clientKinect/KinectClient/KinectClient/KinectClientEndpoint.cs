@@ -54,6 +54,11 @@ namespace KinectClient
             socket.Emit("hand", JsonConvert.SerializeObject(rightUpdate));
         }
 
+        public void SendKeywordRecognized(string word)
+        {
+            socket.Emit("keyword", word);
+        }
+
         public void Close()
         {
             if (socket == null)

@@ -28,10 +28,13 @@ var controls : any;
 var container = document.getElementById("container");
 var entityGroup = new THREE.Group();
 var mesh_mouses : THREE.Mesh[] = [];
+var mesh_menu: THREE.Mesh;
 
+var menu_material : THREE.Material;
 var cube_material : THREE.MeshBasicMaterial;
 var mouse_material_open : THREE.Material;
 var mouse_material_closed : THREE.Material;
+var mouse_positions : THREE.Vector3[] = [];
 var fakeGestureClose = false;
 
 init();
@@ -64,7 +67,10 @@ function init() {
         transparent : true
     } );
     
-    
+    menu_material = new THREE.MeshBasicMaterial({
+        map : textureLoader.load('media/menu1.png'), 
+        transparent : true 
+    });
     renderer = new THREE.WebGLRenderer();
     
     renderer.setPixelRatio( window.devicePixelRatio );
@@ -90,9 +96,11 @@ function init() {
     controls = new THREE.DeviceOrientationControls( camera );
     initDeviceOrientation(); 
     
-   
+    mesh_menu = new THREE.Mesh(new THREE.PlaneBufferGeometry(4, 4), menu_material);
     mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5).scale(-1, 1, 1), mouse_material_closed));
     mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5), mouse_material_closed));
+    mouse_positions.push(new THREE.Vector3(10, 0, 0));
+    mouse_positions.push(new THREE.Vector3(10, 0, 0));
     socket.on("kinect-mouse", (mouses : MessageMouses) => {
         updateMouse(mouses);
     });
@@ -103,6 +111,20 @@ function init() {
     // fake world
     updateWorld({ 0: { pos: { x: 3, y: 0, z: 0 }, xw: 0.5, yw: 0.5, zw: 0.5 } });
     socket.on("world", updateWorld);
+    openMenu();
+}
+
+// use current right mouse
+function openMenu()
+{
+    scene.add(mesh_menu);
+    mesh_menu.position.set(mouse_positions[1].x, mouse_positions[1].y, mouse_positions[1].z);
+    mesh_menu.lookAt(camera.position);
+}
+
+function closeMenu()
+{
+    scene.remove(mesh_menu);
 }
 
 function updateMouse(mouses : MessageMouses)
@@ -110,11 +132,13 @@ function updateMouse(mouses : MessageMouses)
     for (var id in mouses)
     {
         var mousePos = new THREE.Vector3(mouses[id].DX, mouses[id].DY, mouses[id].DZ);
+        
         console.log(mousePos); 
         mousePos.x *= 10;
         mousePos.y *= 10;
         mousePos.z *= 10;
         var index = mouses[id].IsLeft ? 0 : 1; 
+        mouse_positions[index] = mousePos;
         if (mouses[id].Gesture == "closed")
             mesh_mouses[index].material =  mouse_material_closed;
         else

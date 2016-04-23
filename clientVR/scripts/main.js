@@ -19,9 +19,12 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
     var container = document.getElementById("container");
     var entityGroup = new THREE.Group();
     var mesh_mouses = [];
+    var mesh_menu;
+    var menu_material;
     var cube_material;
     var mouse_material_open;
     var mouse_material_closed;
+    var mouse_positions = [];
     var fakeGestureClose = false;
     init();
     animate();
@@ -50,6 +53,10 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
             side: THREE.DoubleSide,
             transparent: true
         });
+        menu_material = new THREE.MeshBasicMaterial({
+            map: textureLoader.load('media/menu1.png'),
+            transparent: true
+        });
         renderer = new THREE.WebGLRenderer();
         renderer.setPixelRatio(window.devicePixelRatio);
         effect = new THREE.StereoEffect(renderer);
@@ -70,8 +77,11 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         window.addEventListener('resize', onWindowResize, false);
         controls = new THREE.DeviceOrientationControls(camera);
         initDeviceOrientation();
+        mesh_menu = new THREE.Mesh(new THREE.PlaneBufferGeometry(4, 4), menu_material);
         mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5).scale(-1, 1, 1), mouse_material_closed));
         mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5), mouse_material_closed));
+        mouse_positions.push(new THREE.Vector3(10, 0, 0));
+        mouse_positions.push(new THREE.Vector3(10, 0, 0));
         socket.on("kinect-mouse", function (mouses) {
             updateMouse(mouses);
         });
@@ -81,6 +91,16 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         // fake world
         updateWorld({ 0: { pos: { x: 3, y: 0, z: 0 }, xw: 0.5, yw: 0.5, zw: 0.5 } });
         socket.on("world", updateWorld);
+        openMenu();
+    }
+    // use current right mouse
+    function openMenu() {
+        scene.add(mesh_menu);
+        mesh_menu.position.set(mouse_positions[1].x, mouse_positions[1].y, mouse_positions[1].z);
+        mesh_menu.lookAt(camera.position);
+    }
+    function closeMenu() {
+        scene.remove(mesh_menu);
     }
     function updateMouse(mouses) {
         for (var id in mouses) {
@@ -90,6 +110,7 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
             mousePos.y *= 10;
             mousePos.z *= 10;
             var index = mouses[id].IsLeft ? 0 : 1;
+            mouse_positions[index] = mousePos;
             if (mouses[id].Gesture == "closed")
                 mesh_mouses[index].material = mouse_material_closed;
             else
