@@ -81,9 +81,6 @@ define(["require", "exports", "socket.io-client"], function (require, exports, i
                 onMouseDownLat = lat;
                 break;
             case 2:
-                var v = new THREE.Vector3(event.clientX / container.clientWidth - 0.5, event.clientY / container.clientHeight - 0.5, -1);
-                v.applyQuaternion(camera.quaternion);
-                socket.emit("mouse", { DX: v.x, DY: v.y, DZ: v.z, Gestrure: "open" });
                 break;
             default:
                 console.log(currentMouseButton);
@@ -96,6 +93,9 @@ define(["require", "exports", "socket.io-client"], function (require, exports, i
                 lat = (event.clientY - onMouseDownMouseY) * 0.1 + onMouseDownLat;
                 break;
             case 2:
+                var v = new THREE.Vector3(event.clientX / container.clientWidth - 0.5, event.clientY / container.clientHeight - 0.5, -1);
+                v.applyQuaternion(camera.quaternion);
+                socket.emit("mouse", { DX: v.x, DY: v.y, DZ: v.z, Gestrure: "open" });
                 break;
         }
     }

@@ -101,9 +101,6 @@ function onDocumentMouseDown( event : MouseEvent ) {
             onMouseDownLat = lat;
             break;
         case 2: //middle
-            var v = new THREE.Vector3( event.clientX / container.clientWidth - 0.5, event.clientY / container.clientHeight - 0.5, -1 );
-            v.applyQuaternion( camera.quaternion );
-            socket.emit("mouse", <MessageMouse>{ DX: v.x, DY: v.y, DZ: v.z, Gestrure: "open" });
             break;
         default:
             console.log(currentMouseButton);
@@ -117,6 +114,9 @@ function onDocumentMouseMove( event : MouseEvent ) {
             lat = ( event.clientY - onMouseDownMouseY ) * 0.1 + onMouseDownLat;
             break;
         case 2: 
+            var v = new THREE.Vector3( event.clientX / container.clientWidth - 0.5, event.clientY / container.clientHeight - 0.5, -1 );
+            v.applyQuaternion( camera.quaternion );
+            socket.emit("mouse", <MessageMouse>{ DX: v.x, DY: v.y, DZ: v.z, Gestrure: "open" });
             break;
     }
 }
