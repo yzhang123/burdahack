@@ -30,5 +30,15 @@ var io = socketio.listen(server);
 
 Routing(io, app);
 
+var allViews: { [uid: string]: DeviceView } = { };
+
+io.on('connection', socket =>
+{
+    socket.on('update-device-view', (deviceView: DeviceView) =>
+    {
+        allViews[deviceView.id] = deviceView;
+    });
+});
+
 console.log("Running on port: " + confAppPort);
 server.listen(confAppPort);
