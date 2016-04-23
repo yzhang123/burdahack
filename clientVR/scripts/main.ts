@@ -24,8 +24,7 @@ var effect : any;
 var controls : any;
 var container = document.getElementById("container");
 var entityGroup = new THREE.Group();
-var mousePos : THREE.Vector3;
-var mouseMode : string;
+var mesh_mouse : THREE.Mesh;
 
 var cube_material : THREE.MeshBasicMaterial;
 var mouse_material_open : THREE.MeshBasicMaterial;
@@ -51,10 +50,12 @@ function init() {
         map: new THREE.TextureLoader().load( 'media/crate.gif')
     } );
     mouse_material_open = new THREE.MeshBasicMaterial( {
-        map: new THREE.TextureLoader().load( 'media/hand-open.png')
+        map: new THREE.TextureLoader().load( 'media/hand-open.png'),
+        side: THREE.DoubleSide
     } );
     mouse_material_closed = new THREE.MeshBasicMaterial( {
-        map: new THREE.TextureLoader().load( 'media/hand-closed.png')
+        map: new THREE.TextureLoader().load( 'media/hand-closed.png'),
+        side: THREE.DoubleSide
     } );
     
     
@@ -79,23 +80,39 @@ function init() {
     controls = new THREE.DeviceOrientationControls( camera );
     initDeviceOrientation(); 
     
+   
+    mesh_mouse = new THREE.Mesh(new THREE.PlaneGeometry(5, 5), mouse_material_closed);
     socket.on("kinect-mouse", (mouse : MessageMouse) => {
-        mousePos = new THREE.Vector3(mouse.DX, mouse.DY, mouse.DZ);
-        var len =  mousePos.length();
-        mousePos.x *= 20 / len;
-        mousePos.y *= 20 / len;
-        mousePos.z *= 20 / len;
-        mouseMode = mouse.Gesture;
+        var mousePos = new THREE.Vector3(mouse.DX, mouse.DY, mouse.DZ);
+        //updateMouse(mousePos, mouse.Gesture);
     });
+    updateMouse(new THREE.Vector3(15, 5, 5), "open");
+    scene.add(mesh_mouse);
     
     // fake world
     updateWorld({ 0: { pos: { x: 30, y: 0, z: 0 }, xw: 5, yw: 5, zw: 5 } });
     socket.on("world", updateWorld);
 }
 
+function updateMouse(mousePos : THREE.Vector3, mouseMode : string)
+{
+    //console.log("updateMouse(" + mousePos.toArray() + ", " + mouseMode + ")");
+    var len =  mousePos.length();
+    mousePos.x *= 20 / len;
+    mousePos.y *= 20 / len;
+    mousePos.z *= 20 / len;
+    if (mouseMode == "closed")
+        mesh_mouse.material =  mouse_material_closed;
+    else
+        mesh_mouse.material = mouse_material_open;
+    mesh_mouse.position.set(mousePos.x, mousePos.y, mousePos.z);
+    mesh_mouse.lookAt(camera.position);
+}
+
 
 function updateWorld(world : MessageWorld)
 {
+    //console.log("updateWorld(...)");
     scene.remove(entityGroup);
     entityGroup = new THREE.Group(); 
     for (var id in world)
@@ -104,17 +121,9 @@ function updateWorld(world : MessageWorld)
         var cube = new THREE.BoxBufferGeometry(entity.xw, entity.yw, entity.zw);
         var mesh_cube = new THREE.Mesh( cube, cube_material );
         mesh_cube.position.set(entity.pos.x, entity.pos.y, entity.pos.z);
+        mesh_cube.lookAt(camera.position);
         entityGroup.add(mesh_cube);
     }
-    
-    
-    var mouse = new THREE.PlaneGeometry(5, 5);
-    var mesh_mouse : THREE.Mesh;
-    if (mouseMode == "closed")
-        mesh_mouse = new THREE.Mesh(mouse, mouse_material_closed);
-    else
-        mesh_mouse = new THREE.Mesh(mouse, mouse_material_open);
-    //mesh_mouse.position.set(mousePos.x - 5, mousePos.y - 5, )
     scene.add(entityGroup);
 }
 
