@@ -31,6 +31,15 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
     var mouse_positions = [];
     var fakeGestureClose = false;
     var mesh_back, mesh_front;
+    var materialCache = {};
+    function getMaterial(url) {
+        var cached = materialCache[url];
+        if (cached)
+            return cached;
+        var mat = new entityRenderer_1.DynamicMaterial();
+        mat.renderURL("entity/" + url);
+        return materialCache[url] = mat.getMaterial();
+    }
     init(document.location.href.indexOf("mono=1") > -1);
     animate();
     function materialFromImage(url) {
@@ -60,14 +69,9 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         mesh_front = new THREE.Mesh(geometry_front, material_front);
         backgroundGroup.add(mesh_back);
         backgroundGroup.add(mesh_front);
-        cube_material = materialFromImage('media/crate.gif');
         mouse_materials["open"] = materialFromImage('media/hand-open.png');
         mouse_materials["closed"] = materialFromImage('media/hand-closed.png');
         mouse_materials["lasso"] = materialFromImage('media/hand-lasso.png');
-        cube_material = entityRenderer_1.createMaterial("<p style='color:red'>HALLO</p>", 64, 64);
-        var temp = new entityRenderer_1.DynamicMaterial(512, 512);
-        temp.renderURL("/entity/bubble.html?text=PIMEL");
-        cube_material = temp.getMaterial();
         menu_material = materialFromImage('media/menu1.png');
         renderer = new THREE.WebGLRenderer();
         renderer.setPixelRatio(window.devicePixelRatio);
@@ -96,8 +100,8 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         controls = new THREE.DeviceOrientationControls(camera);
         initDeviceOrientation();
         mesh_menu = new THREE.Mesh(new THREE.PlaneBufferGeometry(0.8, 0.8), menu_material);
-        mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(0.5, 0.5).scale(-1, 1, 1), mouse_materials["closed"]));
         mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(0.5, 0.5), mouse_materials["closed"]));
+        mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(0.5, 0.5).scale(-1, 1, 1), mouse_materials["closed"]));
         mouse_positions.push(new THREE.Vector3(5, 0, 0));
         mouse_positions.push(new THREE.Vector3(5, 0, 0));
         socket.on("kinect-mouse", function (mouses) {
@@ -110,8 +114,9 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         cursorGroup.add(mesh_mouses[0]);
         cursorGroup.add(mesh_mouses[1]);
         // fake world
-        updateWorld({ 0: { pos: { x: 3, y: 0, z: 0 }, xw: 0.5, yw: 0.5, zw: 0.5 } });
-        socket.on("world", updateWorld);
+        var world = { 0: { pos: { x: 3, y: 0, z: 0 }, xw: 0.5, yw: 0.5, zw: 0.5 } };
+        setInterval(function () { return updateWorld(world); }, 40);
+        socket.on("world", function (w) { return world = w; });
         socket.on("show-menu", openMenu);
         socket.on("hide-menu", closeMenu);
         //openMenu();
@@ -144,12 +149,18 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         //console.log("updateMouse(" + mousePos.toArray() + ", " + mouseMode + ")");
     }
     function updateWorld(world) {
-        //console.log("updateWorld(...)");
         entityGroup.children.forEach(function (x) { return entityGroup.remove(x); });
         for (var id in world) {
             var entity = world[id];
-            var cube = new THREE.PlaneBufferGeometry(entity.xw, entity.yw);
-            var mesh_cube = new THREE.Mesh(cube, cube_material);
+            entity.url = "box?text=hallo";
+            var mat = getMaterial(entity.url);
+            var scale = 0.02;
+            var cube;
+            if (!mat.map.image)
+                cube = new THREE.PlaneBufferGeometry(entity.xw, entity.yw);
+            else
+                cube = new THREE.PlaneBufferGeometry(scale * mat.map.image.width, scale * mat.map.image.height);
+            var mesh_cube = new THREE.Mesh(cube, mat);
             mesh_cube.position.set(entity.pos.x, entity.pos.y, entity.pos.z);
             mesh_cube.lookAt(camera.position);
             entityGroup.add(mesh_cube);

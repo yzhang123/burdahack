@@ -7,12 +7,9 @@ export class DynamicMaterial
     private texture : THREE.Texture;
     private material : THREE.MeshBasicMaterial;
     
-    public constructor(
-        private width: number,
-        private height: number
-    )
+    public constructor()
     {
-        this.canvas = createCanvas(width, height);
+        this.canvas = createCanvas(1, 1);
         this.texture = new THREE.Texture(this.canvas);
         this.material = new THREE.MeshBasicMaterial( {
             map: this.texture,
@@ -20,15 +17,6 @@ export class DynamicMaterial
             transparent : true,
             alphaTest: 0.1
         } );
-    }
-    
-    public getContext(): CanvasRenderingContext2D
-    {
-        return this.canvas.getContext("2d");
-    }
-    public clear(): void
-    {
-        this.getContext().clearRect(0,0,this.width, this.height);
     }
     
     public updateTexture(): void
@@ -43,15 +31,27 @@ export class DynamicMaterial
     
     public renderHTML(html: string): void
     {
-        this.clear();
-        rasterizeHTML.drawHTML(html, this.canvas)
-            .then(() => this.updateTexture());
+        rasterizeHTML.drawHTML(html)
+            .then(image => {
+                this.canvas.width = image.image.width;
+                this.canvas.height = image.image.height;
+                rasterizeHTML.drawHTML(html, this.canvas)
+                    .then(() => {
+                        this.updateTexture();
+                    });
+            });
     }
     public renderURL(url: string): void
     {
-        this.clear();
-        rasterizeHTML.drawURL(url, this.canvas)
-            .then(() => this.updateTexture());
+        rasterizeHTML.drawURL(url)
+            .then(image => {
+                this.canvas.width = image.image.width;
+                this.canvas.height = image.image.height;
+                rasterizeHTML.drawURL(url, this.canvas)
+                    .then(() => {
+                        this.updateTexture();
+                    });
+            });
     }
 }
 
