@@ -24,3 +24,5 @@ export class Box {
 		return {xw: this.xw, yw: this.yw, zw: this.zw, pos: this.pos, url: this.geturl()};
 	}
 }
+
+export type Boxes = { [uid: string]: Box };

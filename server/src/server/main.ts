@@ -23,8 +23,10 @@ import async = require('async');
 import multer = require("multer");
 import Routing = require("./Routing");
 import MyMath = require("./MyMath");
-import { Box } from "./../shared/Box";
+import { Box, Boxes } from "./../shared/Box";
 import { BoxText } from "./../shared/BoxText";
+import { StateMachine } from "./StateMachine";
+import { Hand } from "./Hand";
 
 // APP
 var app = express();
@@ -57,43 +59,15 @@ boxState[2] = {grabbed: false};
 
 var lastMouse: any = { };
 
-class HandData {
-	public id: number;
-	public posPrev: Vector3D = null;
-	public posNow: Vector3D = null;
-	public gesturePrev: string;
-	public gestureNow: string;
-
-	public debug(): void
-	{
-		console.log(this.id);
-		if (this.posPrev) console.log("pprv: " + this.posPrev.x + " " + this.posPrev.y + " " + this.posPrev.z);
-		if (this.posNow) console.log("pnow: " + this.posNow.x + " " + this.posNow.y + " " + this.posNow.z);
-		if (this.gesturePrev) console.log("gprev" + this.gesturePrev);
-		if (this.gestureNow) console.log("gnow: " + this.gestureNow);
-	}
-}
-
 // right, left hand
-var hands: HandData[] = [new HandData(), new HandData()];
+var hands: Hand[] = [new Hand(), new Hand()];
 var menuPos: Vector3D = null;
-var currHand: HandData;
+var currHand: Hand;
 var editMode: boolean = false;
 var editBoxID: string = null;
 hands[0].id = 0;
 hands[1].id = 1;
 
-// 0 = nothing (leave state as is), 1 = grab, 2 = release-all
-function updateStateGrab(boxid: string, grabAction: number): void
-{
-	var box = boxes[boxid];
-	var hitval: number = MyMath.vcos(box.pos, currHand.posPrev);
-	if (hitval > 0.9 && grabAction == 1)
-		boxState[boxid].grabbed = true;
-
-	if (grabAction == 2)
-		boxState[boxid].grabbed = false;
-}
 
 function transform(data: any): void
 {
@@ -108,6 +82,24 @@ function transform(data: any): void
 		data.DX = p.x, data.DY = p.y, data.DZ = p.z;
 }
 
+var stateMachine: StateMachine = new StateMachine({
+	sendWorld: (boxes: Boxes) => {
+		var data: { [uid: string]: IBox } = { };
+		for (var id in boxes)
+			data[id] = boxes[id].getPayload();
+
+    	io.sockets.emit('world', data);
+	},
+	sendKinectMouse: (mousedata: MultMouseData) => {
+		//console.log(mousedata);
+		io.sockets.emit('kinect-mouse', mousedata);
+	},
+	showMenu: () => {
+		io.sockets.emit('show-menu');
+	}
+});
+
+stateMachine.state = stateMachine.stateFreeHand;
 
 io.on('connection', socket =>
 {
@@ -123,6 +115,7 @@ io.on('connection', socket =>
     	}
 	}
 
+	/*
 	function update(boxid: string): void
 	{
 		// edit mode section
@@ -171,7 +164,7 @@ io.on('connection', socket =>
 				console.log("HIDE");
 			}
 		}
-	}
+	}*/
 
 	function handInput(data: any)
 	{
@@ -180,35 +173,7 @@ io.on('connection', socket =>
 
 		transform(data);
 
-		var handID: number = 0;
-		if (data.IsLeft) handID = 1;
-
-		lastMouse[handID] = data;
-
-		currHand = hands[handID];
-		var dHand = {x: data.DX, y: data.DY, z: data.DZ};
-		currHand.posPrev = currHand.posNow;
-		currHand.posNow = dHand;
-
-		currHand.gesturePrev = currHand.gestureNow;
-		currHand.gestureNow = data.Gesture;
-
-
-		if (!(currHand.posPrev && currHand.posNow)) return;
-
-		globalUpdate();
-
-		for (var id in boxes)
-	    {
-	    	if (currHand.gestureNow == "closed") {
-		    	if (currHand.gesturePrev != "closed")
-		    		updateStateGrab(id, 1); // grab? grab if grab
-		    } else if (currHand.gestureNow == "open") {
-	    		updateStateGrab(id, 2); // release
-	    	}
-
-	        update(id);
-	    }
+		stateMachine.updateHand(data);
 	}
 
     socket.on('update-device-view', (deviceView: DeviceView) =>
@@ -234,18 +199,7 @@ io.on('connection', socket =>
    // socket.on('keyword-input', (keyword: string))
 
     setInterval(() => {
-    	if (boxes)
-    	{
-    		var data: { [uid: string]: IBox } = { };
-    		for (var id in boxes)
-    			data[id] = boxes[id].getPayload();
-
-	    	socket.emit('world', data);
-	    }
-	   	if (lastMouse)
-	   	{
-	    	socket.emit('kinect-mouse', lastMouse);
-	    }
+    	stateMachine.update();
     }, 1000/40);
 });
 
