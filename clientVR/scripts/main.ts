@@ -8,8 +8,8 @@
 
 import $ = require("jquery");
 import io = require("socket.io-client");
-//var TODO_debugEndpoint = "192.168.180.126:8090";
-var TODO_debugEndpoint = "192.168.173.101:8090";
+var TODO_debugEndpoint = "192.168.180.126:8090";
+//var TODO_debugEndpoint = "192.168.173.101:8090";
 var socket: SocketIOClient.Socket = io.connect(TODO_debugEndpoint);
 
 import { createMaterial, DynamicMaterial } from "entityRenderer";
@@ -266,7 +266,7 @@ function onDocumentMouseMove( event : MouseEvent ) {
         case 2: 
             var v = new THREE.Vector3( event.clientX / container.clientWidth - 0.5, -(event.clientY / container.clientHeight - 0.5), -1 );
             v.applyQuaternion( camera.quaternion );
-            socket.emit("mouse", <MessageMouse>{ DX: v.x, DY: v.y, DZ: v.z, Gesture: fakeGestureClose ? "closed" : "open" });
+            socket.volatile.emit("mouse", <MessageMouse>{ DX: v.x, DY: v.y, DZ: v.z, Gesture: fakeGestureClose ? "closed" : "open" });
             break;
     }
 }
@@ -294,7 +294,7 @@ function update() {
     v.applyQuaternion( camera.quaternion );
     if (usingDevice && ++throttle == 3)
     {
-        socket.emit("head-rot", v);
+        socket.volatile.emit("head-rot", v);
         throttle = 0;
     }
 }
