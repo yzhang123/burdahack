@@ -122,7 +122,7 @@ function init(useMono : boolean ) {
     controls = new THREE.DeviceOrientationControls( camera );
     initDeviceOrientation();
     
-    mesh_menu = new THREE.Mesh(new THREE.PlaneBufferGeometry(10.8, 10.8), menu_material);
+    mesh_menu = new THREE.Mesh(new THREE.PlaneBufferGeometry(0.8, 0.8), menu_material);
     mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(0.5, 0.5), mouse_materials["closed"]));
     mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(0.5, 0.5).scale(-1, 1, 1), mouse_materials["closed"]));
     mouse_positions.push(new THREE.Vector3(5, 0, 0));
@@ -279,6 +279,7 @@ function animate() {
     requestAnimationFrame( animate );
     update();
 }
+var throttle = 0;
 function update() {
     if (usingDevice)
     {
@@ -289,8 +290,11 @@ function update() {
     
     var v = new THREE.Vector3( 0, 0, -1 );
     v.applyQuaternion( camera.quaternion );
-    if (usingDevice)
+    if (usingDevice && ++throttle == 3)
+    {
         socket.emit("head-rot", v);
+        throttle = 0;
+    }
 }
 
 
