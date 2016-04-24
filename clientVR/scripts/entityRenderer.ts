@@ -15,7 +15,7 @@ export class DynamicMaterial
             map: this.texture,
             side: THREE.DoubleSide,
             transparent : true,
-            alphaTest: 0.1
+            alphaTest: 0.01
         } );
     }
     

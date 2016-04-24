@@ -9,7 +9,7 @@ define(["require", "exports"], function (require, exports) {
                 map: this.texture,
                 side: THREE.DoubleSide,
                 transparent: true,
-                alphaTest: 0.1
+                alphaTest: 0.01
             });
         }
         DynamicMaterial.prototype.updateTexture = function () {

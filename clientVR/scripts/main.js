@@ -2,7 +2,8 @@
 /// <reference path="../../comm/MessageWorld.ts" />
 define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], function (require, exports, $, io, entityRenderer_1) {
     "use strict";
-    var TODO_debugEndpoint = "192.168.180.126:8090";
+    //var TODO_debugEndpoint = "192.168.180.126:8090";
+    var TODO_debugEndpoint = "192.168.173.103:8090";
     var socket = io.connect(TODO_debugEndpoint);
     var textureLoader = new THREE.TextureLoader();
     var originRotation = 0;
@@ -46,12 +47,13 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         return new THREE.MeshBasicMaterial({
             map: textureLoader.load(url),
             side: THREE.DoubleSide,
-            transparent: true
+            transparent: true,
+            depthWrite: false
         });
         ;
     }
     function init(useMono) {
-        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.8, 11000);
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 11000);
         scene = new THREE.Scene();
         scene.add(backgroundGroup);
         scene.add(entityGroup);
@@ -114,12 +116,20 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         cursorGroup.add(mesh_mouses[0]);
         cursorGroup.add(mesh_mouses[1]);
         // fake world
-        var world = { 0: { pos: { x: 3, y: 0, z: 0 }, xw: 0.5, yw: 0.5, zw: 0.5 } };
+        var world = {
+            0: { pos: { x: 20, y: 0, z: 0 }, xw: 0.5, yw: 0.5, url: "textbox?text=test" },
+            1: { pos: { x: 0, y: 0, z: 20 }, xw: 0.5, yw: 0.5, url: "imgbox?url=/media/menu.png" },
+            2: { pos: { x: -20, y: 0, z: 0 }, xw: 0.5, yw: 0.5, url: "textbox?text=qweqqweqwe" }
+        };
         setInterval(function () { return updateWorld(world); }, 40);
         socket.on("world", function (w) { return world = w; });
         socket.on("show-menu", openMenu);
         socket.on("hide-menu", closeMenu);
         //openMenu();
+        if (useMono)
+            socket.on("head-rot", function (lookAt) {
+                camera.lookAt(lookAt);
+            });
     }
     // use current right mouse
     function openMenu() {
@@ -142,7 +152,7 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
             mousePos.y *= 10;
             mousePos.z *= 10;
             mouse_positions[id] = mousePos;
-            mesh_mouses[id].material = mouse_materials[mouses[id].Gesture];
+            mesh_mouses[id].material = mouse_materials[mouses[id].Gesture] || mesh_mouses[id].material;
             mesh_mouses[id].position.set(mousePos.x, mousePos.y, mousePos.z);
             mesh_mouses[id].lookAt(camera.position);
         }
@@ -152,9 +162,8 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         entityGroup.children.forEach(function (x) { return entityGroup.remove(x); });
         for (var id in world) {
             var entity = world[id];
-            entity.url = "box?text=hallo";
             var mat = getMaterial(entity.url);
-            var scale = 0.02;
+            var scale = 0.05;
             var cube;
             if (!mat.map.image)
                 cube = new THREE.PlaneBufferGeometry(entity.xw, entity.yw);
@@ -200,6 +209,11 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
             case 1:
                 lon = (onMouseDownMouseX - event.clientX) * 0.1 + onMouseDownLon;
                 lat = (event.clientY - onMouseDownMouseY) * 0.1 + onMouseDownLat;
+                lat = Math.max(-85, Math.min(85, lat));
+                phi = THREE.Math.degToRad(90 - lat);
+                theta = THREE.Math.degToRad(lon - originRotation);
+                var target = new THREE.Vector3(500 * Math.sin(phi) * Math.cos(theta), 500 * Math.cos(phi), 500 * Math.sin(phi) * Math.sin(theta));
+                camera.lookAt(target);
                 break;
             case 2:
                 var v = new THREE.Vector3(event.clientX / container.clientWidth - 0.5, -(event.clientY / container.clientHeight - 0.5), -1);
@@ -219,19 +233,19 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         requestAnimationFrame(animate);
         update();
     }
+    var throttle = 0;
     function update() {
         if (usingDevice) {
             controls.update();
         }
-        else {
-            lat = Math.max(-85, Math.min(85, lat));
-            phi = THREE.Math.degToRad(90 - lat);
-            theta = THREE.Math.degToRad(lon - originRotation);
-            var target = new THREE.Vector3(500 * Math.sin(phi) * Math.cos(theta), 500 * Math.cos(phi), 500 * Math.sin(phi) * Math.sin(theta));
-            camera.lookAt(target);
-        }
         mesh_back.rotation.y += 0.0001;
         effect.render(scene, camera);
+        var v = new THREE.Vector3(0, 0, -1);
+        v.applyQuaternion(camera.quaternion);
+        if (usingDevice && ++throttle == 3) {
+            socket.emit("head-rot", v);
+            throttle = 0;
+        }
     }
     function goFullScreen() {
         originRotation = lon;
