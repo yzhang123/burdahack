@@ -3,7 +3,7 @@
 define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], function (require, exports, $, io, entityRenderer_1) {
     "use strict";
     //var TODO_debugEndpoint = "192.168.180.126:8090";
-    var TODO_debugEndpoint = "192.168.173.103:8090";
+    var TODO_debugEndpoint = "192.168.173.101:8090";
     var socket = io.connect(TODO_debugEndpoint);
     var textureLoader = new THREE.TextureLoader();
     var originRotation = 0;
