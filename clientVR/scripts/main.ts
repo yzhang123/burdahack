@@ -11,7 +11,7 @@ import io = require("socket.io-client");
 var TODO_debugEndpoint = "192.168.180.126:8090";
 var socket: SocketIOClient.Socket = io.connect(TODO_debugEndpoint);
 
-import { createTexture, createMaterial } from "entityRenderer";
+import { createMaterial, DynamicMaterial } from "entityRenderer";
 
 var textureLoader = new THREE.TextureLoader();
     
@@ -36,8 +36,7 @@ var menu_visible : boolean = false;
 
 var menu_material : THREE.Material;
 var cube_material : THREE.MeshBasicMaterial;
-var mouse_material_open : THREE.Material;
-var mouse_material_closed : THREE.Material;
+var mouse_materials : { [id: string] : THREE.Material } = {};
 var mouse_positions : THREE.Vector3[] = [];
 var fakeGestureClose = false;
 
@@ -53,7 +52,7 @@ function materialFromImage(url : string)
     } );;
 }
 
-function init(useMono : bool ) {
+function init(useMono : boolean ) {
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.8, 11000 );
     scene = new THREE.Scene();
     var geometry = new THREE.SphereGeometry( 10000, 60, 40 );
@@ -63,8 +62,9 @@ function init(useMono : bool ) {
     var mesh = new THREE.Mesh( geometry, material );
     scene.add( mesh );
     cube_material = materialFromImage( 'media/crate.gif');
-    mouse_material_open = materialFromImage( 'media/hand-open.png');
-    mouse_material_closed = materialFromImage( 'media/hand-closed.png');
+    mouse_materials["open"] = materialFromImage( 'media/hand-open.png');
+    mouse_materials["closed"] = materialFromImage( 'media/hand-closed.png');
+    mouse_materials["lasso"] = materialFromImage( 'media/hand-lasso.png');
     cube_material = createMaterial("<p style='color:red'>HALLO</p>",64,64);
     
     menu_material = materialFromImage('media/menu1.png');
@@ -97,9 +97,9 @@ function init(useMono : bool ) {
     controls = new THREE.DeviceOrientationControls( camera );
     initDeviceOrientation(); 
     
-    mesh_menu = new THREE.Mesh(new THREE.PlaneBufferGeometry(4, 4), menu_material);
-    mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5).scale(-1, 1, 1), mouse_material_closed));
-    mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5), mouse_material_closed));
+    mesh_menu = new THREE.Mesh(new THREE.PlaneBufferGeometry(0.8, 0.8), menu_material);
+    mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5).scale(-1, 1, 1), mouse_materials["closed"]));
+    mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5), mouse_materials["closed"]));
     mouse_positions.push(new THREE.Vector3(5, 0, 0));
     mouse_positions.push(new THREE.Vector3(5, 0, 0));
     socket.on("kinect-mouse", (mouses : MessageMouses) => {
@@ -125,7 +125,6 @@ function openMenu()
     mesh_menu.position.set(mouse_positions[1].x, mouse_positions[1].y, mouse_positions[1].z);
     mesh_menu.lookAt(camera.position);
     menu_visible = true;
-    //xsetTimeout( closeMenu, 0, 5 );
 }
 
 function closeMenu()
@@ -146,10 +145,7 @@ function updateMouse(mouses : MessageMouses)
         mousePos.z *= 10;
         var index = mouses[id].IsLeft ? 0 : 1; 
         mouse_positions[index] = mousePos;
-        if (mouses[id].Gesture == "closed")
-            mesh_mouses[index].material =  mouse_material_closed;
-        else
-            mesh_mouses[index].material = mouse_material_open;
+        mesh_mouses[index].material = mouse_materials[mouses[id].Gesture];
         mesh_mouses[index].position.set(mousePos.x, mousePos.y, mousePos.z);
         mesh_mouses[index].lookAt(camera.position);
     }
@@ -257,6 +253,9 @@ function goFullScreen()
 {
     originRotation = lon;
     var elem : any = container;
+    if(usingDevice) {
+        controls.updateAlphaOffsetAngle(controls.alpha);
+    }
     if (elem.requestFullScreen) {
         elem.requestFullScreen();
     } else if (elem.mozRequestFullScreen) {
