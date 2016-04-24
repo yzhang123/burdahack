@@ -27,6 +27,7 @@ import { Box, Boxes } from "./../shared/Box";
 import { BoxText } from "./../shared/BoxText";
 import { StateMachine } from "./StateMachine";
 import { Hand } from "./Hand";
+var request = require('ajax-request');
 
 // APP
 var app = express();
@@ -81,6 +82,7 @@ stateMachine.state = stateMachine.stateFreeHand;
 
 io.on('connection', socket =>
 {
+	console.log("connected.");
 	function handInput(data: any)
 	{
 		if (data.Confidence == 'low')
@@ -103,7 +105,6 @@ io.on('connection', socket =>
 
     socket.on('keyword', (key: string) =>
     {
-    	//console.log("ROOT: " + key);
     	stateMachine.speechInput(key);
     });
 
@@ -111,12 +112,12 @@ io.on('connection', socket =>
     {
     	handInput(data);
     });
-   
+   // socket.on('keyword-input', (keyword: string))
 
     setInterval(() => {
     	
     	stateMachine.update();
-    }, 1000/30);
+    }, 1000/10);
 });
 
 console.log("Running on port: " + confAppPort);

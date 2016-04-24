@@ -5,6 +5,7 @@ import MyMath = require("./../MyMath");
 import State = require("./../State");
 import { Hand } from "./../Hand";
 import { BoxText } from "./../../shared/BoxText";
+import { BoxImage } from "./../../shared/BoxImage";
 
 export class ShowMenu implements State {
 	private itemIsSelected: boolean;
@@ -14,6 +15,7 @@ export class ShowMenu implements State {
 		public forceHandID?: number)
 	{
 		console.log("GRAB-FORCE-menu: " + forceHandID);
+		this.menuPos = MyMath.mult(this.menuPos, 20);
 	}
 
 	public createUID(): string
@@ -23,13 +25,19 @@ export class ShowMenu implements State {
 
 	public onHandInput(currHand: Hand): void
 	{
-		if (this.itemIsSelected)
+		if (this.itemIsSelected) {
+			if (currHand.gestureNow == "closed")
+			{
+				delete this.host.boxes[this.newid];
+				this.host.state = this.host.stateFreeHand;
+			}
 			return;
+		}
 
 		var diff: Vector3D = MyMath.vecdiff(currHand.posNow, this.menuPos);
 		var len = MyMath.vlength(diff);
 
-		if (len > 0.3) {
+		if (len > 1) {
 			this.newid = this.createUID();
 
 			if (diff.y < 0 && Math.abs(diff.y) > Math.abs(diff.x)
@@ -42,9 +50,10 @@ export class ShowMenu implements State {
 				this.host.boxes[this.newid] = new BoxText(this.menuPos, 10);
 			} else {
 				console.log("C"); // links
-				this.host.boxes[this.newid] = new BoxText(this.menuPos, 10);
+				this.host.boxes[this.newid] = new BoxImage(this.menuPos, 10);
 			}
 			console.log("HIDE");
+			this.callbacks.hideMenu();
 			this.itemIsSelected = true;
 		}
 	}
@@ -58,7 +67,6 @@ export class ShowMenu implements State {
 
 	public onLeave(): void
 	{
-		this.callbacks.hideMenu();
 	}
 
 	public speechInput(word: string): void
