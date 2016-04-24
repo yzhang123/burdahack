@@ -36,7 +36,7 @@ var menu_visible : boolean = false;
 
 var menu_material : THREE.Material;
 var cube_material : THREE.MeshBasicMaterial;
-var mouse_material_open : THREE.Material;
+var mouse_materials : { [id: string] : THREE.Material } = {};
 var mouse_material_closed : THREE.Material;
 var mouse_positions : THREE.Vector3[] = [];
 var fakeGestureClose = false;
@@ -63,7 +63,9 @@ function init(useMono : bool ) {
     var mesh = new THREE.Mesh( geometry, material );
     scene.add( mesh );
     cube_material = materialFromImage( 'media/crate.gif');
-    mouse_material_open = materialFromImage( 'media/hand-open.png');
+    mouse_materials["open"] = materialFromImage( 'media/hand-open.png');
+    mouse_materials["closed"] = materialFromImage( 'media/hand-closed.png');
+    mouse_materials["lasso"] = materialFromImage( 'media/hand-lasso.png');
     mouse_material_closed = materialFromImage( 'media/hand-closed.png');
     cube_material = createMaterial("<p style='color:red'>HALLO</p>",64,64);
     
@@ -146,10 +148,7 @@ function updateMouse(mouses : MessageMouses)
         mousePos.z *= 10;
         var index = mouses[id].IsLeft ? 0 : 1; 
         mouse_positions[index] = mousePos;
-        if (mouses[id].Gesture == "closed")
-            mesh_mouses[index].material =  mouse_material_closed;
-        else
-            mesh_mouses[index].material = mouse_material_open;
+        mesh_mouses[index].material = mouse_materials[mouses[id].Gesture];
         mesh_mouses[index].position.set(mousePos.x, mousePos.y, mousePos.z);
         mesh_mouses[index].lookAt(camera.position);
     }
