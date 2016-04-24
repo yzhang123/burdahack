@@ -235,6 +235,7 @@ namespace KinectClient
                         if (body.IsTracked)
                         {
                             this.endpoint.SendHandUpdate(body);
+                            break;
                         }
                     }
                 }

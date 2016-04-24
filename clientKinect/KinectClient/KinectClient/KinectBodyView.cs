@@ -247,6 +247,8 @@ namespace Microsoft.Samples.Kinect.DiscreteGestureBasics
 
                             dc.DrawText(lht, jointPoints[JointType.HandLeft]);
                             dc.DrawText(rht, jointPoints[JointType.HandRight]);
+
+                            break;
                         }
                     }
 
