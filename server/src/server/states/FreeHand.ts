@@ -36,7 +36,7 @@ export class FreeHand implements State {
 				}
 			}
 		}
-		else if (currHand.gestureNow == "lasso")
+		else if (currHand.gestureNow == "lasso" && this.host.currHandID == 1)
 		{
 			this.host.state = new ShowMenu(this.host, this.callbacks,
 				{x: currHand.posNow.x, y: currHand.posNow.y, z: currHand.posNow.z}, this.host.currHandID);

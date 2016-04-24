@@ -27,6 +27,7 @@ import { Box, Boxes } from "./../shared/Box";
 import { BoxText } from "./../shared/BoxText";
 import { StateMachine } from "./StateMachine";
 import { Hand } from "./Hand";
+var request = require('ajax-request');
 
 // APP
 var app = express();
@@ -63,7 +64,7 @@ var stateMachine: StateMachine = new StateMachine({
 		for (var id in boxes)
 			data[id] = boxes[id].getPayload();
 
-    	io.sockets.emit('world', data);
+    	(<any>io.sockets).volatile.emit('world', data);
 	},
 	sendKinectMouse: (mousedata: MultMouseData) => {
 		//console.log(mousedata);
@@ -81,6 +82,7 @@ stateMachine.state = stateMachine.stateFreeHand;
 
 io.on('connection', socket =>
 {
+	console.log("connected.");
 	function handInput(data: any)
 	{
 		if (data.Confidence == 'low')
@@ -103,7 +105,6 @@ io.on('connection', socket =>
 
     socket.on('keyword', (key: string) =>
     {
-    	//console.log("ROOT: " + key);
     	stateMachine.speechInput(key);
     });
 
@@ -111,7 +112,7 @@ io.on('connection', socket =>
     {
     	handInput(data);
     });
-   
+   // socket.on('keyword-input', (keyword: string))
 
     setInterval(() => {
     	
