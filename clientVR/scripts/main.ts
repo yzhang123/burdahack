@@ -255,6 +255,9 @@ function goFullScreen()
 {
     originRotation = lon;
     var elem : any = container;
+    if(usingDevice) {
+        controls.updateAlphaOffsetAngle(controls.alpha);
+    }
     if (elem.requestFullScreen) {
         elem.requestFullScreen();
     } else if (elem.mozRequestFullScreen) {
