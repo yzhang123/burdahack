@@ -9,6 +9,29 @@ using Newtonsoft.Json;
 
 namespace KinectClient
 {
+    class MedianBuffer<T> {
+        const int size = 10;
+
+        private List<T> buf = new List<T>();
+
+        public T Push(T x)
+        {
+            buf.Add(x);
+
+            while(buf.Count > size)
+            {
+                buf.RemoveAt(0);
+            }
+
+            var q = from c in buf
+                    group c by x into g
+                    let count = g.Count()
+                    orderby count descending
+                    select new { Value = g.Key, Count = count };
+
+            return q.First().Value;
+        }
+    }
     class HandUpdate
     {
         public int BodyId { get; set; }
@@ -27,11 +50,18 @@ namespace KinectClient
     class KinectClientEndpoint
     {
         public const string DefaultEndpoint = "http://192.168.180.126:8090";
+        private const int skip = 2;
+        private int count;
         private Socket socket;
+        private MedianBuffer<HandState> leftBuffer;
+        private MedianBuffer<HandState> rightBuffer;
 
         public KinectClientEndpoint()
         {
             socket = null;
+            count = 0;
+            leftBuffer = new MedianBuffer<HandState>();
+            rightBuffer = new MedianBuffer<HandState>();
         }
 
         public void Connect(string url = DefaultEndpoint)
@@ -47,11 +77,18 @@ namespace KinectClient
             if (socket == null)
                 throw new InvalidOperationException("Not Connected");
 
-            HandUpdate leftUpdate = Create(body.Joints[JointType.HandLeft], body.Joints[JointType.Head], body.HandLeftState, true, body.HandLeftConfidence, (int)body.TrackingId);
-            HandUpdate rightUpdate = Create(body.Joints[JointType.HandRight], body.Joints[JointType.Head], body.HandRightState, false, body.HandRightConfidence, (int)body.TrackingId);
+            HandUpdate leftUpdate = Create(body.Joints[JointType.HandLeft], body.Joints[JointType.Head], leftBuffer.Push(body.HandLeftState), true, body.HandLeftConfidence, (int)body.TrackingId);
+            HandUpdate rightUpdate = Create(body.Joints[JointType.HandRight], body.Joints[JointType.Head], rightBuffer.Push(body.HandRightState), false, body.HandRightConfidence, (int)body.TrackingId);
 
-            socket.Emit("hand", JsonConvert.SerializeObject(leftUpdate));
-            socket.Emit("hand", JsonConvert.SerializeObject(rightUpdate));
+            count++;
+
+            if (count >= skip)
+            {
+                socket.Emit("hand", JsonConvert.SerializeObject(leftUpdate));
+                socket.Emit("hand", JsonConvert.SerializeObject(rightUpdate));
+
+                count = 0;
+            }
         }
 
         public void SendKeywordRecognized(string word)
