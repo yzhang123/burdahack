@@ -9,7 +9,7 @@
 import $ = require("jquery");
 import io = require("socket.io-client");
 //var TODO_debugEndpoint = "192.168.180.126:8090";
-var TODO_debugEndpoint = "192.168.173.103:8090";
+var TODO_debugEndpoint = "192.168.173.101:8090";
 var socket: SocketIOClient.Socket = io.connect(TODO_debugEndpoint);
 
 import { createMaterial, DynamicMaterial } from "entityRenderer";
