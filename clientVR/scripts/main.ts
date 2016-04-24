@@ -40,6 +40,8 @@ var mouse_materials : { [id: string] : THREE.Material } = {};
 var mouse_positions : THREE.Vector3[] = [];
 var fakeGestureClose = false;
 
+var mesh_back, mesh_front;
+
 init(document.location.href.indexOf("mono=1") > -1);
 animate();
 
@@ -55,12 +57,18 @@ function materialFromImage(url : string)
 function init(useMono : boolean ) {
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.8, 11000 );
     scene = new THREE.Scene();
-    var geometry = new THREE.SphereGeometry( 10000, 60, 40 );
-    geometry.scale( - 1, 1, 1 );
-    var material = materialFromImage( 'media/background.jpg');
-    material.transparent=false;
-    var mesh = new THREE.Mesh( geometry, material );
-    scene.add( mesh );
+    var geometry_back = new THREE.SphereGeometry( 10000, 60, 40 );
+    geometry_back.scale( - 1, 1, 1 );
+    var geometry_front = new THREE.SphereGeometry( 9500, 60, 40 );
+    geometry_front.scale( - 1, 1, 1 );
+    var material_back = materialFromImage( 'media/background.jpg');
+    var material_front = materialFromImage( 'media/background_front.png');
+    material_back.transparent=false;
+    material_front.transparent=true;
+    mesh_back = new THREE.Mesh( geometry_back, material_back );
+    mesh_front = new THREE.Mesh( geometry_front, material_front );
+    scene.add( mesh_back );
+    scene.add( mesh_front );
     cube_material = materialFromImage( 'media/crate.gif');
     mouse_materials["open"] = materialFromImage( 'media/hand-open.png');
     mouse_materials["closed"] = materialFromImage( 'media/hand-closed.png');
@@ -248,6 +256,7 @@ function update() {
         );
         camera.lookAt( target );
     }
+    mesh_back.rotation.y += 0.0001;
     effect.render( scene, camera );
 }
 
