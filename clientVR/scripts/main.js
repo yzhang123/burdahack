@@ -19,6 +19,9 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
     var controls;
     var container = document.getElementById("container");
     var entityGroup = new THREE.Group();
+    var cursorGroup = new THREE.Group();
+    var menuGroup = new THREE.Group();
+    var backgroundGroup = new THREE.Group();
     var mesh_mouses = [];
     var mesh_menu;
     var menu_visible = false;
@@ -41,6 +44,10 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
     function init(useMono) {
         camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.8, 11000);
         scene = new THREE.Scene();
+        scene.add(backgroundGroup);
+        scene.add(entityGroup);
+        scene.add(menuGroup);
+        scene.add(cursorGroup);
         var geometry_back = new THREE.SphereGeometry(10000, 60, 40);
         geometry_back.scale(-1, 1, 1);
         var geometry_front = new THREE.SphereGeometry(9500, 60, 40);
@@ -51,8 +58,8 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         material_front.transparent = true;
         mesh_back = new THREE.Mesh(geometry_back, material_back);
         mesh_front = new THREE.Mesh(geometry_front, material_front);
-        scene.add(mesh_back);
-        scene.add(mesh_front);
+        backgroundGroup.add(mesh_back);
+        backgroundGroup.add(mesh_front);
         cube_material = materialFromImage('media/crate.gif');
         mouse_materials["open"] = materialFromImage('media/hand-open.png');
         mouse_materials["closed"] = materialFromImage('media/hand-closed.png');
@@ -64,6 +71,7 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         menu_material = materialFromImage('media/menu1.png');
         renderer = new THREE.WebGLRenderer();
         renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.sortObjects = false;
         if (useMono) {
             effect = new THREE.TrivialEffect(renderer);
         }
@@ -93,11 +101,14 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         mouse_positions.push(new THREE.Vector3(5, 0, 0));
         mouse_positions.push(new THREE.Vector3(5, 0, 0));
         socket.on("kinect-mouse", function (mouses) {
-            updateMouse(mouses);
+            //updateMouse(mouses);
         });
-        //updateMouse(new THREE.Vector3(15, 5, 5), "open");
-        scene.add(mesh_mouses[0]);
-        scene.add(mesh_mouses[1]);
+        updateMouse({
+            "0": { DX: 0.8, DY: 0.1, DZ: 0.1, Gesture: "open" },
+            "1": { DX: 0.8, DY: -0.1, DZ: -0.1, Gesture: "open" }
+        });
+        cursorGroup.add(mesh_mouses[0]);
+        cursorGroup.add(mesh_mouses[1]);
         // fake world
         updateWorld({ 0: { pos: { x: 3, y: 0, z: 0 }, xw: 0.5, yw: 0.5, zw: 0.5 } });
         socket.on("world", updateWorld);
@@ -109,14 +120,14 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
     function openMenu() {
         if (menu_visible)
             return;
-        scene.add(mesh_menu);
+        menuGroup.add(mesh_menu);
         mesh_menu.position.set(mouse_positions[1].x, mouse_positions[1].y, mouse_positions[1].z);
         mesh_menu.lookAt(camera.position);
         menu_visible = true;
     }
     function closeMenu() {
         menu_visible = false;
-        scene.remove(mesh_menu);
+        menuGroup.remove(mesh_menu);
     }
     function updateMouse(mouses) {
         for (var id in mouses) {
@@ -135,8 +146,7 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
     }
     function updateWorld(world) {
         //console.log("updateWorld(...)");
-        scene.remove(entityGroup);
-        entityGroup = new THREE.Group();
+        entityGroup.children.forEach(function (x) { return entityGroup.remove(x); });
         for (var id in world) {
             var entity = world[id];
             var cube = new THREE.PlaneBufferGeometry(entity.xw, entity.yw);
@@ -145,7 +155,6 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
             mesh_cube.lookAt(camera.position);
             entityGroup.add(mesh_cube);
         }
-        scene.add(entityGroup);
     }
     function initDeviceOrientation() {
         if (window.DeviceOrientationEvent)

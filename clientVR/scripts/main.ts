@@ -5,7 +5,7 @@
 /// <reference path="decl/require.d.ts" />
 /// <reference path="decl/jquery.d.ts" />
 /// <reference path="decl/socket.io-client.d.ts" />
- 
+
 import $ = require("jquery");
 import io = require("socket.io-client");
 var TODO_debugEndpoint = "192.168.180.126:8090";
@@ -30,6 +30,9 @@ var effect : any;
 var controls : any;
 var container = document.getElementById("container");
 var entityGroup = new THREE.Group();
+var cursorGroup = new THREE.Group();
+var menuGroup = new THREE.Group();
+var backgroundGroup = new THREE.Group();
 var mesh_mouses : THREE.Mesh[] = [];
 var mesh_menu: THREE.Mesh;
 var menu_visible : boolean = false;
@@ -40,7 +43,7 @@ var mouse_materials : { [id: string] : THREE.Material } = {};
 var mouse_positions : THREE.Vector3[] = [];
 var fakeGestureClose = false;
 
-var mesh_back, mesh_front;
+var mesh_back: THREE.Mesh, mesh_front: THREE.Mesh;
 
 init(document.location.href.indexOf("mono=1") > -1);
 animate();
@@ -57,6 +60,10 @@ function materialFromImage(url : string)
 function init(useMono : boolean ) {
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.8, 11000 );
     scene = new THREE.Scene();
+    scene.add(backgroundGroup);
+    scene.add(entityGroup);
+    scene.add(menuGroup);
+    scene.add(cursorGroup);
     var geometry_back = new THREE.SphereGeometry( 10000, 60, 40 );
     geometry_back.scale( - 1, 1, 1 );
     var geometry_front = new THREE.SphereGeometry( 9500, 60, 40 );
@@ -67,8 +74,8 @@ function init(useMono : boolean ) {
     material_front.transparent=true;
     mesh_back = new THREE.Mesh( geometry_back, material_back );
     mesh_front = new THREE.Mesh( geometry_front, material_front );
-    scene.add( mesh_back );
-    scene.add( mesh_front );
+    backgroundGroup.add( mesh_back );
+    backgroundGroup.add( mesh_front );
     cube_material = materialFromImage( 'media/crate.gif');
     mouse_materials["open"] = materialFromImage( 'media/hand-open.png');
     mouse_materials["closed"] = materialFromImage( 'media/hand-closed.png');
@@ -83,6 +90,7 @@ function init(useMono : boolean ) {
     renderer = new THREE.WebGLRenderer();
     
     renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.sortObjects = false;
 
     if(useMono) {
         effect = new THREE.TrivialEffect(renderer);
@@ -115,11 +123,14 @@ function init(useMono : boolean ) {
     mouse_positions.push(new THREE.Vector3(5, 0, 0));
     mouse_positions.push(new THREE.Vector3(5, 0, 0));
     socket.on("kinect-mouse", (mouses : MessageMouses) => {
-        updateMouse(mouses);
+        //updateMouse(mouses);
     });
-    //updateMouse(new THREE.Vector3(15, 5, 5), "open");
-    scene.add(mesh_mouses[0]);
-    scene.add(mesh_mouses[1]);
+    updateMouse({
+        "0": { DX: 0.8, DY: 0.1, DZ: 0.1, Gesture: "open" },
+        "1": { DX: 0.8, DY: -0.1, DZ: -0.1, Gesture: "open" }
+    });
+    cursorGroup.add(mesh_mouses[0]);
+    cursorGroup.add(mesh_mouses[1]);
     
     // fake world
     updateWorld({ 0: { pos: { x: 3, y: 0, z: 0 }, xw: 0.5, yw: 0.5, zw: 0.5 } });
@@ -133,7 +144,7 @@ function init(useMono : boolean ) {
 function openMenu()
 {
     if (menu_visible) return;
-    scene.add(mesh_menu);
+    menuGroup.add(mesh_menu);
     mesh_menu.position.set(mouse_positions[1].x, mouse_positions[1].y, mouse_positions[1].z);
     mesh_menu.lookAt(camera.position);
     menu_visible = true;
@@ -142,7 +153,7 @@ function openMenu()
 function closeMenu()
 {
     menu_visible = false;
-    scene.remove(mesh_menu);
+    menuGroup.remove(mesh_menu);
 }
 
 function updateMouse(mouses : MessageMouses)
@@ -165,12 +176,10 @@ function updateMouse(mouses : MessageMouses)
 
 }
 
-
 function updateWorld(world : MessageWorld)
 {
     //console.log("updateWorld(...)");
-    scene.remove(entityGroup);
-    entityGroup = new THREE.Group(); 
+    entityGroup.children.forEach(x => entityGroup.remove(x));
     for (var id in world)
     {
         var entity = world[id];
@@ -180,7 +189,6 @@ function updateWorld(world : MessageWorld)
         mesh_cube.lookAt(camera.position);
         entityGroup.add(mesh_cube);
     }
-    scene.add(entityGroup);
 }
 
 function initDeviceOrientation()
