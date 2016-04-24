@@ -123,7 +123,7 @@ function init(useMono : boolean ) {
     mouse_positions.push(new THREE.Vector3(5, 0, 0));
     mouse_positions.push(new THREE.Vector3(5, 0, 0));
     socket.on("kinect-mouse", (mouses : MessageMouses) => {
-        //updateMouse(mouses);
+        updateMouse(mouses);
     });
     updateMouse({
         "0": { DX: 0.8, DY: 0.1, DZ: 0.1, Gesture: "open" },
@@ -134,7 +134,7 @@ function init(useMono : boolean ) {
     
     // fake world
     updateWorld({ 0: { pos: { x: 3, y: 0, z: 0 }, xw: 0.5, yw: 0.5, zw: 0.5 } });
-    //socket.on("world", updateWorld);
+    socket.on("world", updateWorld);
     socket.on("show-menu", openMenu);
     socket.on("hide-menu", closeMenu);
     //openMenu();

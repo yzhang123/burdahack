@@ -101,7 +101,7 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         mouse_positions.push(new THREE.Vector3(5, 0, 0));
         mouse_positions.push(new THREE.Vector3(5, 0, 0));
         socket.on("kinect-mouse", function (mouses) {
-            //updateMouse(mouses);
+            updateMouse(mouses);
         });
         updateMouse({
             "0": { DX: 0.8, DY: 0.1, DZ: 0.1, Gesture: "open" },
@@ -111,7 +111,7 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         cursorGroup.add(mesh_mouses[1]);
         // fake world
         updateWorld({ 0: { pos: { x: 3, y: 0, z: 0 }, xw: 0.5, yw: 0.5, zw: 0.5 } });
-        //socket.on("world", updateWorld);
+        socket.on("world", updateWorld);
         socket.on("show-menu", openMenu);
         socket.on("hide-menu", closeMenu);
         //openMenu();
