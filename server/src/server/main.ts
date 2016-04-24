@@ -23,6 +23,8 @@ import async = require('async');
 import multer = require("multer");
 import Routing = require("./Routing");
 import MyMath = require("./MyMath");
+import { Box } from "./../shared/Box";
+import { BoxText } from "./../shared/BoxText";
 
 // APP
 var app = express();
@@ -30,6 +32,11 @@ var server = require("http").createServer(app);
 var io = socketio.listen(server);
 
 Routing(io, app);
+
+function createUID(): string
+{
+    return "BOX" + new Date().getTime();
+}
 
 interface State {
 	grabbed: boolean;
@@ -40,15 +47,13 @@ var allViews: { [uid: string]: DeviceView } = { };
 var boxes: { [uid: string]: Box } = { };
 var boxState: { [uid: string]: State } = { };
 
-boxes[0] = {pos: {x: 30, y: 0, z: 0}, xw:10, yw:10, zw: 10};
-boxes[1] = {pos: {x: -30, y: 0, z: 0}, xw:10, yw:10, zw: 10};
-boxes[2] = {pos: {x: 0, y: 0, z: 30}, xw:10, yw:10, zw: 10};
-boxes[3] = {pos: {x: 0, y: 0, z: -30}, xw:10, yw:10, zw: 10};
+boxes[0] = new Box({x: 30, y: 0, z: 0}, 10);
+boxes[1] = new Box({x: 0, y: 0, z: 30}, 10);
+boxes[2] = new Box({x: 0, y: 0, z: -30}, 10);
+
 boxState[0] = {grabbed: false};
 boxState[1] = {grabbed: false};
 boxState[2] = {grabbed: false};
-boxState[3] = {grabbed: false};
-
 
 var lastMouse: any = { };
 
@@ -74,6 +79,7 @@ var hands: HandData[] = [new HandData(), new HandData()];
 var menuPos: Vector3D = null;
 var currHand: HandData;
 var editMode: boolean = false;
+var editBoxID: string = null;
 hands[0].id = 0;
 hands[1].id = 1;
 
@@ -94,7 +100,6 @@ function transform(data: any): void
 	var p: Vector3D = {x: -data.DZ, y: data.DY, z: data.DX};
 	var len: number = MyMath.vlength(p);
 	if (len > 1) p = MyMath.mult(p, 1/len);
-	
 	data.X = null, data.Y = null, data.Z = null;
 
 	if (MyMath.vlength(p) < 0.1)
@@ -106,12 +111,37 @@ function transform(data: any): void
 
 io.on('connection', socket =>
 {
+	function globalUpdate(): void
+	{
+		if (editMode) return;
+
+		if (currHand.gestureNow == "lasso") {
+			socket.broadcast.emit("show-menu", {});
+    		menuPos = {x: currHand.posNow.x,
+    				   y: currHand.posNow.y,
+    				   z: currHand.posNow.z}
+    	}
+	}
+
 	function update(boxid: string): void
 	{
+		// edit mode section
+		if (editBoxID && boxes[editBoxID].done())
+		{
+			console.log("NEW BOX");
+			console.log(boxes[editBoxID].keywords);
+			console.log(boxes[editBoxID].pos);
+			editBoxID = null;
+		}
+		//////////////////////
+		if (editMode) return;
+
 		if (boxState[boxid].grabbed)
 		{
 			var n: Vector3D = {x: currHand.posNow.x, y: currHand.posNow.y, z: currHand.posNow.z};
-			n = MyMath.mult(n, 30/MyMath.vlength(n)); // normalize at 30
+			var len: number = MyMath.vlength(n);
+			n = MyMath.mult(n, Math.max(10, len*50)/len); // normalize at 30
+
 			boxes[boxid].pos = n;
 		}
 
@@ -119,18 +149,22 @@ io.on('connection', socket =>
 			var diff: Vector3D = MyMath.vecdiff(currHand.posNow, menuPos);
 			var len = MyMath.vlength(diff);
 
-			if (len > 0.4) {
+			if (len > 0.3) {
+				var id = createUID();
+
 				if (diff.y < 0 && Math.abs(diff.y) > Math.abs(diff.x)
 					&& Math.abs(diff.y) > Math.abs(diff.z)) {
 					editMode = false;
-					console.log("A"); // untne
+					console.log("A"); // unten
+					boxes[id] = new BoxText(menuPos, 10);
+					boxState[id] = { grabbed: false };
 				} else if (diff.x < 0 && Math.abs(diff.x) > Math.abs(diff.y)
 					&& Math.abs(diff.x) > Math.abs(diff.z)) {
 					editMode = false;
 					console.log("B"); // rechts
 				} else {
 					editMode = false;
-					console.log("C"); // link
+					console.log("C"); // links
 				}
 				socket.broadcast.emit("hide-menu");
 				menuPos = null;
@@ -160,15 +194,9 @@ io.on('connection', socket =>
 		currHand.gestureNow = data.Gesture;
 
 
-
 		if (!(currHand.posPrev && currHand.posNow)) return;
 
-		if (currHand.gestureNow == "lasso") {
-			socket.broadcast.emit("show-menu", {});
-    		menuPos = {x: currHand.posNow.x,
-    				   y: currHand.posNow.y,
-    				   z: currHand.posNow.z}
-    	}
+		globalUpdate();
 
 		for (var id in boxes)
 	    {
@@ -192,6 +220,13 @@ io.on('connection', socket =>
     	data = JSON.parse(data);
         handInput(data);
     });
+
+    socket.on('speech-input', (key: string) =>
+    {
+    	if (!editBoxID || boxes[editBoxID].done()) return;
+    	boxes[editBoxID].feedParams(key);
+    });
+
     socket.on('mouse', (data: any) =>
     {
     	handInput(data);
@@ -200,8 +235,15 @@ io.on('connection', socket =>
 
     setInterval(() => {
     	if (boxes)
-	    	socket.emit('world', boxes);
-	   	if (lastMouse) {
+    	{
+    		var data: { [uid: string]: IBox } = { };
+    		for (var id in boxes)
+    			data[id] = boxes[id].getPayload();
+
+	    	socket.emit('world', data);
+	    }
+	   	if (lastMouse)
+	   	{
 	    	socket.emit('kinect-mouse', lastMouse);
 	    }
     }, 1000/40);
