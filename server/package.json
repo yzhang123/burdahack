@@ -26,6 +26,7 @@
     "open-graph": "*",
     "cookie-session": "*",
     "connect-mongo": "*",
-    "ajax-request": "*"
+    "ajax-request": "*",
+    "request": "*"
   }
 }

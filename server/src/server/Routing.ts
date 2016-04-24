@@ -13,6 +13,7 @@ import { renderEntity } from "./EntitiesRenderer";
 var MongoStore = require('connect-mongo')(session);
 var path = require("path");
 var sharedsession = require("express-socket.io-session");
+var request = require("request");
 
 export = (io: any, app: express.Express) => {
     app.use(bodyParser.json());
@@ -46,6 +47,11 @@ export = (io: any, app: express.Express) => {
         res.end();
     };
     app.use("/entity/", entityRequestHandler);
+
+    app.use('/image/', function(req, res) {  
+      var url = decodeURIComponent(req.url.substring(1));
+      req.pipe(request(url)).pipe(res);
+    });
 
     app.use("/", express.static("../clientVR", { maxAge: 0 }));
 }

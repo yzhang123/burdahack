@@ -64,7 +64,7 @@ var stateMachine: StateMachine = new StateMachine({
 		for (var id in boxes)
 			data[id] = boxes[id].getPayload();
 
-    	io.sockets.emit('world', data);
+    	(<any>io.sockets).volatile.emit('world', data);
 	},
 	sendKinectMouse: (mousedata: MultMouseData) => {
 		//console.log(mousedata);
@@ -117,7 +117,7 @@ io.on('connection', socket =>
     setInterval(() => {
     	
     	stateMachine.update();
-    }, 1000/10);
+    }, 1000/30);
 });
 
 console.log("Running on port: " + confAppPort);
