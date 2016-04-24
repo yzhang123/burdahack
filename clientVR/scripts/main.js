@@ -21,6 +21,7 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
     var entityGroup = new THREE.Group();
     var mesh_mouses = [];
     var mesh_menu;
+    var menu_visible = false;
     var menu_material;
     var cube_material;
     var mouse_material_open;
@@ -91,12 +92,16 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
     }
     // use current right mouse
     function openMenu() {
+        if (menu_visible)
+            return;
         scene.add(mesh_menu);
         mesh_menu.position.set(mouse_positions[1].x, mouse_positions[1].y, mouse_positions[1].z);
         mesh_menu.lookAt(camera.position);
-        //setTimeout( closeMenu, 0, 5 );
+        menu_visible = true;
+        //xsetTimeout( closeMenu, 0, 5 );
     }
     function closeMenu() {
+        menu_visible = false;
         scene.remove(mesh_menu);
     }
     function updateMouse(mouses) {

@@ -32,6 +32,7 @@ var container = document.getElementById("container");
 var entityGroup = new THREE.Group();
 var mesh_mouses : THREE.Mesh[] = [];
 var mesh_menu: THREE.Mesh;
+var menu_visible : boolean = false;
 
 var menu_material : THREE.Material;
 var cube_material : THREE.MeshBasicMaterial;
@@ -115,14 +116,17 @@ function init() {
 // use current right mouse
 function openMenu()
 {
+    if (menu_visible) return;
     scene.add(mesh_menu);
     mesh_menu.position.set(mouse_positions[1].x, mouse_positions[1].y, mouse_positions[1].z);
     mesh_menu.lookAt(camera.position);
-    //setTimeout( closeMenu, 0, 5 );
+    menu_visible = true;
+    //xsetTimeout( closeMenu, 0, 5 );
 }
 
 function closeMenu()
 {
+    menu_visible = false;
     scene.remove(mesh_menu);
 }
 
