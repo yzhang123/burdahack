@@ -99,7 +99,7 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         scene.add(mesh_menu);
         mesh_menu.position.set(mouse_positions[1].x, mouse_positions[1].y, mouse_positions[1].z);
         mesh_menu.lookAt(camera.position);
-        setTimeout(closeMenu, 0, 5);
+        //setTimeout( closeMenu, 0, 5 );
     }
     function closeMenu() {
         scene.remove(mesh_menu);

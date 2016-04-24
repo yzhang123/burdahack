@@ -52,7 +52,7 @@ function materialFromImage(url : string)
     } );;
 }
 
-function init(useMono : bool) {
+function init(useMono : bool ) {
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.8, 11000 );
     scene = new THREE.Scene();
     var geometry = new THREE.SphereGeometry( 10000, 60, 40 );
@@ -122,7 +122,7 @@ function openMenu()
     scene.add(mesh_menu);
     mesh_menu.position.set(mouse_positions[1].x, mouse_positions[1].y, mouse_positions[1].z);
     mesh_menu.lookAt(camera.position);
-    setTimeout( closeMenu, 0, 5 );
+    //setTimeout( closeMenu, 0, 5 );
 }
 
 function closeMenu()
