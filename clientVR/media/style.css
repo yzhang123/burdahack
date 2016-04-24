@@ -4,19 +4,3 @@ body {
     cursor: move;
     overflow: hidden;
 }
-
-a {
-    color: #ffffff;
-}
-
-#info {
-    position: absolute;
-    width: 100%;
-    color: #ffffff;
-    padding: 5px;
-    font-family: Monospace;
-    font-size: 13px;
-    font-weight: bold;
-    text-align: center;
-    z-index: 1;
-}

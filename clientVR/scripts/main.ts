@@ -5,7 +5,7 @@
 /// <reference path="decl/require.d.ts" />
 /// <reference path="decl/jquery.d.ts" />
 /// <reference path="decl/socket.io-client.d.ts" />
- 
+
 import $ = require("jquery");
 import io = require("socket.io-client");
 var TODO_debugEndpoint = "192.168.180.126:8090";
@@ -30,6 +30,9 @@ var effect : any;
 var controls : any;
 var container = document.getElementById("container");
 var entityGroup = new THREE.Group();
+var cursorGroup = new THREE.Group();
+var menuGroup = new THREE.Group();
+var backgroundGroup = new THREE.Group();
 var mesh_mouses : THREE.Mesh[] = [];
 var mesh_menu: THREE.Mesh;
 var menu_visible : boolean = false;
@@ -40,7 +43,17 @@ var mouse_materials : { [id: string] : THREE.Material } = {};
 var mouse_positions : THREE.Vector3[] = [];
 var fakeGestureClose = false;
 
-var mesh_back, mesh_front;
+var mesh_back: THREE.Mesh, mesh_front: THREE.Mesh;
+
+var materialCache: { [url: string]: THREE.MeshBasicMaterial } = {};
+function getMaterial(url: string): THREE.MeshBasicMaterial
+{
+    var cached = materialCache[url];
+    if (cached) return cached;
+    var mat = new DynamicMaterial();
+    mat.renderURL("entity/" + url);
+    return materialCache[url] = mat.getMaterial();
+}
 
 init(document.location.href.indexOf("mono=1") > -1);
 animate();
@@ -49,7 +62,7 @@ function materialFromImage(url : string)
 {
     return new THREE.MeshBasicMaterial( {
         map: textureLoader.load( url ),
-        //side: THREE.DoubleSide,
+        side: THREE.DoubleSide,
         transparent : true
     } );;
 }
@@ -57,6 +70,11 @@ function materialFromImage(url : string)
 function init(useMono : boolean ) {
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.8, 11000 );
     scene = new THREE.Scene();
+    scene.add(backgroundGroup);
+    scene.add(entityGroup);
+    scene.add(menuGroup);
+    scene.add(cursorGroup);
+    
     var geometry_back = new THREE.SphereGeometry( 10000, 60, 40 );
     geometry_back.scale( - 1, 1, 1 );
     var geometry_front = new THREE.SphereGeometry( 9500, 60, 40 );
@@ -67,22 +85,17 @@ function init(useMono : boolean ) {
     material_front.transparent=true;
     mesh_back = new THREE.Mesh( geometry_back, material_back );
     mesh_front = new THREE.Mesh( geometry_front, material_front );
-    scene.add( mesh_back );
-    scene.add( mesh_front );
-    cube_material = materialFromImage( 'media/crate.gif');
+    backgroundGroup.add( mesh_back );
+    backgroundGroup.add( mesh_front );
     mouse_materials["open"] = materialFromImage( 'media/hand-open.png');
     mouse_materials["closed"] = materialFromImage( 'media/hand-closed.png');
     mouse_materials["lasso"] = materialFromImage( 'media/hand-lasso.png');
-    cube_material = createMaterial("<p style='color:red'>HALLO</p>",64,64);
-    
-    var temp = new DynamicMaterial(512, 512);
-    temp.renderURL("media/entities/test.htm");
-    cube_material = temp.getMaterial();
     
     menu_material = materialFromImage('media/menu1.png');
     renderer = new THREE.WebGLRenderer();
     
     renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.sortObjects = false;
 
     if(useMono) {
         effect = new THREE.TrivialEffect(renderer);
@@ -109,31 +122,44 @@ function init(useMono : boolean ) {
     controls = new THREE.DeviceOrientationControls( camera );
     initDeviceOrientation();
     
-    mesh_menu = new THREE.Mesh(new THREE.PlaneBufferGeometry(0.8, 0.8), menu_material);
-    mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(0.5, 0.5).scale(-1, 1, 1), mouse_materials["closed"]));
+    mesh_menu = new THREE.Mesh(new THREE.PlaneBufferGeometry(10.8, 10.8), menu_material);
     mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(0.5, 0.5), mouse_materials["closed"]));
+    mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(0.5, 0.5).scale(-1, 1, 1), mouse_materials["closed"]));
     mouse_positions.push(new THREE.Vector3(5, 0, 0));
     mouse_positions.push(new THREE.Vector3(5, 0, 0));
     socket.on("kinect-mouse", (mouses : MessageMouses) => {
         updateMouse(mouses);
     });
-    //updateMouse(new THREE.Vector3(15, 5, 5), "open");
-    scene.add(mesh_mouses[0]);
-    scene.add(mesh_mouses[1]);
+    updateMouse({
+        "0": { DX: 0.8, DY: 0.1, DZ: 0.1, Gesture: "open" },
+        "1": { DX: 0.8, DY: -0.1, DZ: -0.1, Gesture: "open" }
+    });
+    cursorGroup.add(mesh_mouses[0]);
+    cursorGroup.add(mesh_mouses[1]);
     
     // fake world
-    updateWorld({ 0: { pos: { x: 3, y: 0, z: 0 }, xw: 0.5, yw: 0.5, zw: 0.5 } });
-    socket.on("world", updateWorld);
+    var world: MessageWorld = { 
+        0: { pos: { x: 20, y: 0, z: 0 }, xw: 0.5, yw: 0.5, url: "textbox?text=test" },
+        1: { pos: { x: 0, y: 0, z: 20 }, xw: 0.5, yw: 0.5, url: "imgbox?url=/media/menu.png" }, 
+        2: { pos: { x: -20, y: 0, z: 0 }, xw: 0.5, yw: 0.5, url: "textbox?text=qweqqweqwe" } 
+    };
+    setInterval(() => updateWorld(world), 40);
+    socket.on("world", (w: MessageWorld) => world = w);
     socket.on("show-menu", openMenu);
     socket.on("hide-menu", closeMenu);
     //openMenu();
+    
+    if (useMono)
+        socket.on("head-rot", (lookAt: THREE.Vector3) => {
+            camera.lookAt( lookAt );
+        });
 }
 
 // use current right mouse
 function openMenu()
 {
     if (menu_visible) return;
-    scene.add(mesh_menu);
+    menuGroup.add(mesh_menu);
     mesh_menu.position.set(mouse_positions[1].x, mouse_positions[1].y, mouse_positions[1].z);
     mesh_menu.lookAt(camera.position);
     menu_visible = true;
@@ -142,7 +168,7 @@ function openMenu()
 function closeMenu()
 {
     menu_visible = false;
-    scene.remove(mesh_menu);
+    menuGroup.remove(mesh_menu);
 }
 
 function updateMouse(mouses : MessageMouses)
@@ -150,37 +176,41 @@ function updateMouse(mouses : MessageMouses)
     for (var id in mouses)
     {
         var mousePos = new THREE.Vector3(mouses[id].DX, mouses[id].DY, mouses[id].DZ);
-        
-        console.log(mousePos); 
+        //console.log(mousePos); 
         mousePos.x *= 10;
         mousePos.y *= 10;
         mousePos.z *= 10;
-        var index = mouses[id].IsLeft ? 0 : 1; 
-        mouse_positions[index] = mousePos;
-        mesh_mouses[index].material = mouse_materials[mouses[id].Gesture];
-        mesh_mouses[index].position.set(mousePos.x, mousePos.y, mousePos.z);
-        mesh_mouses[index].lookAt(camera.position);
+        mouse_positions[id] = mousePos;
+        mesh_mouses[id].material = mouse_materials[mouses[id].Gesture] || mesh_mouses[id].material;
+        mesh_mouses[id].position.set(mousePos.x, mousePos.y, mousePos.z);
+        mesh_mouses[id].lookAt(camera.position);
     }
     //console.log("updateMouse(" + mousePos.toArray() + ", " + mouseMode + ")");
 
 }
 
-
 function updateWorld(world : MessageWorld)
 {
-    //console.log("updateWorld(...)");
-    scene.remove(entityGroup);
-    entityGroup = new THREE.Group(); 
+    entityGroup.children.forEach(x => entityGroup.remove(x));
     for (var id in world)
     {
         var entity = world[id];
-        var cube = new THREE.PlaneBufferGeometry(entity.xw, entity.yw);
-        var mesh_cube = new THREE.Mesh( cube, cube_material );
+        
+        var mat = getMaterial(entity.url);
+        
+        var scale = 0.05;
+        var cube: THREE.PlaneBufferGeometry;
+        if (!mat.map.image)
+            cube = new THREE.PlaneBufferGeometry(entity.xw, entity.yw);
+        else
+            cube = new THREE.PlaneBufferGeometry(
+                scale * mat.map.image.width, 
+                scale * mat.map.image.height);
+        var mesh_cube = new THREE.Mesh( cube, mat );
         mesh_cube.position.set(entity.pos.x, entity.pos.y, entity.pos.z);
         mesh_cube.lookAt(camera.position);
         entityGroup.add(mesh_cube);
     }
-    scene.add(entityGroup);
 }
 
 function initDeviceOrientation()
@@ -220,6 +250,16 @@ function onDocumentMouseMove( event : MouseEvent ) {
         case 1:
             lon = ( onMouseDownMouseX - event.clientX ) * 0.1 + onMouseDownLon;
             lat = ( event.clientY - onMouseDownMouseY ) * 0.1 + onMouseDownLat;
+            
+            lat = Math.max( - 85, Math.min( 85, lat ) );
+            phi = THREE.Math.degToRad( 90 - lat );
+            theta = THREE.Math.degToRad( lon - originRotation );
+            var target = new THREE.Vector3( 
+                500 * Math.sin( phi ) * Math.cos( theta ),
+                500 * Math.cos( phi ),
+                500 * Math.sin( phi ) * Math.sin( theta ) 
+            );
+            camera.lookAt( target );
             break;
         case 2: 
             var v = new THREE.Vector3( event.clientX / container.clientWidth - 0.5, -(event.clientY / container.clientHeight - 0.5), -1 );
@@ -244,20 +284,13 @@ function update() {
     {
         controls.update();
     }
-    else
-    {
-        lat = Math.max( - 85, Math.min( 85, lat ) );
-        phi = THREE.Math.degToRad( 90 - lat );
-        theta = THREE.Math.degToRad( lon - originRotation );
-        var target = new THREE.Vector3( 
-            500 * Math.sin( phi ) * Math.cos( theta ),
-            500 * Math.cos( phi ),
-            500 * Math.sin( phi ) * Math.sin( theta ) 
-        );
-        camera.lookAt( target );
-    }
     mesh_back.rotation.y += 0.0001;
     effect.render( scene, camera );
+    
+    var v = new THREE.Vector3( 0, 0, -1 );
+    v.applyQuaternion( camera.quaternion );
+    if (usingDevice)
+        socket.emit("head-rot", v);
 }
 
 

@@ -2,24 +2,16 @@
 define(["require", "exports"], function (require, exports) {
     "use strict";
     var DynamicMaterial = (function () {
-        function DynamicMaterial(width, height) {
-            this.width = width;
-            this.height = height;
-            this.canvas = createCanvas(width, height);
+        function DynamicMaterial() {
+            this.canvas = createCanvas(1, 1);
             this.texture = new THREE.Texture(this.canvas);
             this.material = new THREE.MeshBasicMaterial({
                 map: this.texture,
                 side: THREE.DoubleSide,
                 transparent: true,
-                alphaTest: 0.1
+                alphaTest: 0.01
             });
         }
-        DynamicMaterial.prototype.getContext = function () {
-            return this.canvas.getContext("2d");
-        };
-        DynamicMaterial.prototype.clear = function () {
-            this.getContext().clearRect(0, 0, this.width, this.height);
-        };
         DynamicMaterial.prototype.updateTexture = function () {
             this.texture.needsUpdate = true;
         };
@@ -28,15 +20,27 @@ define(["require", "exports"], function (require, exports) {
         };
         DynamicMaterial.prototype.renderHTML = function (html) {
             var _this = this;
-            this.clear();
-            rasterizeHTML.drawHTML(html, this.canvas)
-                .then(function () { return _this.updateTexture(); });
+            rasterizeHTML.drawHTML(html)
+                .then(function (image) {
+                _this.canvas.width = image.image.width;
+                _this.canvas.height = image.image.height;
+                rasterizeHTML.drawHTML(html, _this.canvas)
+                    .then(function () {
+                    _this.updateTexture();
+                });
+            });
         };
         DynamicMaterial.prototype.renderURL = function (url) {
             var _this = this;
-            this.clear();
-            rasterizeHTML.drawURL(url, this.canvas)
-                .then(function () { return _this.updateTexture(); });
+            rasterizeHTML.drawURL(url)
+                .then(function (image) {
+                _this.canvas.width = image.image.width;
+                _this.canvas.height = image.image.height;
+                rasterizeHTML.drawURL(url, _this.canvas)
+                    .then(function () {
+                    _this.updateTexture();
+                });
+            });
         };
         return DynamicMaterial;
     }());

@@ -1,6 +1,7 @@
 /// <reference path="../decls/express.d.ts" />
 /// <reference path="../decls/express-session.d.ts" />
 /// <reference path="../decls/ejs.d.ts" />
+/// <reference path="EntitiesRenderer.ts" />
 
 import express = require("express");
 import fs = require("fs");
@@ -39,6 +40,8 @@ export = (io: any, app: express.Express) => {
         var params = parts.length == 1 
             ? { } 
             : JSON.parse('{"' + decodeURI(parts[1]).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g,'":"') + '"}');
+        
+        res.contentType("text/html; charset=UTF-8");
         res.write(renderEntity(parts[0], params));
         res.end();
     };
