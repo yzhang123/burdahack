@@ -36,7 +36,7 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
     function materialFromImage(url) {
         return new THREE.MeshBasicMaterial({
             map: textureLoader.load(url),
-            //side: THREE.DoubleSide,
+            side: THREE.DoubleSide,
             transparent: true
         });
         ;
@@ -111,7 +111,7 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         cursorGroup.add(mesh_mouses[1]);
         // fake world
         updateWorld({ 0: { pos: { x: 3, y: 0, z: 0 }, xw: 0.5, yw: 0.5, zw: 0.5 } });
-        socket.on("world", updateWorld);
+        //socket.on("world", updateWorld);
         socket.on("show-menu", openMenu);
         socket.on("hide-menu", closeMenu);
         //openMenu();
@@ -132,15 +132,14 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
     function updateMouse(mouses) {
         for (var id in mouses) {
             var mousePos = new THREE.Vector3(mouses[id].DX, mouses[id].DY, mouses[id].DZ);
-            console.log(mousePos);
+            //console.log(mousePos); 
             mousePos.x *= 10;
             mousePos.y *= 10;
             mousePos.z *= 10;
-            var index = mouses[id].IsLeft ? 0 : 1;
-            mouse_positions[index] = mousePos;
-            mesh_mouses[index].material = mouse_materials[mouses[id].Gesture];
-            mesh_mouses[index].position.set(mousePos.x, mousePos.y, mousePos.z);
-            mesh_mouses[index].lookAt(camera.position);
+            mouse_positions[id] = mousePos;
+            mesh_mouses[id].material = mouse_materials[mouses[id].Gesture];
+            mesh_mouses[id].position.set(mousePos.x, mousePos.y, mousePos.z);
+            mesh_mouses[id].lookAt(camera.position);
         }
         //console.log("updateMouse(" + mousePos.toArray() + ", " + mouseMode + ")");
     }
