@@ -210,6 +210,9 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
     function goFullScreen() {
         originRotation = lon;
         var elem = container;
+        if (usingDevice) {
+            controls.updateAlphaOffsetAngle(controls.alpha);
+        }
         if (elem.requestFullScreen) {
             elem.requestFullScreen();
         }
