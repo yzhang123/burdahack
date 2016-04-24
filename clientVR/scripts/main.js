@@ -27,7 +27,7 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
     var mouse_material_closed;
     var mouse_positions = [];
     var fakeGestureClose = false;
-    init();
+    init(document.location.href.indexOf("mono=1") > -1);
     animate();
     function materialFromImage(url) {
         return new THREE.MeshBasicMaterial({
@@ -37,7 +37,7 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         });
         ;
     }
-    function init() {
+    function init(useMono) {
         camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.8, 11000);
         scene = new THREE.Scene();
         var geometry = new THREE.SphereGeometry(10000, 60, 40);
@@ -53,7 +53,12 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         menu_material = materialFromImage('media/menu1.png');
         renderer = new THREE.WebGLRenderer();
         renderer.setPixelRatio(window.devicePixelRatio);
-        effect = new THREE.StereoEffect(renderer);
+        if (useMono) {
+            effect = new THREE.TrivialEffect(renderer);
+        }
+        else {
+            effect = new THREE.StereoEffect(renderer);
+        }
         //effect = renderer;
         effect.eyeSeparation = 0;
         effect.setSize(window.innerWidth, window.innerHeight);
@@ -94,7 +99,7 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         scene.add(mesh_menu);
         mesh_menu.position.set(mouse_positions[1].x, mouse_positions[1].y, mouse_positions[1].z);
         mesh_menu.lookAt(camera.position);
-        setTimeout(closeMenu, 0, 20);
+        setTimeout(closeMenu, 0, 5);
     }
     function closeMenu() {
         scene.remove(mesh_menu);

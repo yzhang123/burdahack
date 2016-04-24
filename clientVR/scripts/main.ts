@@ -40,7 +40,7 @@ var mouse_material_closed : THREE.Material;
 var mouse_positions : THREE.Vector3[] = [];
 var fakeGestureClose = false;
 
-init();
+init(document.location.href.indexOf("mono=1") > -1);
 animate();
 
 function materialFromImage(url : string)
@@ -52,7 +52,7 @@ function materialFromImage(url : string)
     } );;
 }
 
-function init() {
+function init(useMono : bool) {
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.8, 11000 );
     scene = new THREE.Scene();
     var geometry = new THREE.SphereGeometry( 10000, 60, 40 );
@@ -71,7 +71,11 @@ function init() {
     
     renderer.setPixelRatio( window.devicePixelRatio );
 
-    effect = new THREE.StereoEffect(renderer);
+    if(useMono) {
+        effect = new THREE.TrivialEffect(renderer);
+    } else {
+        effect = new THREE.StereoEffect(renderer);
+    }
     //effect = renderer;
     effect.eyeSeparation = 0;
     effect.setSize( window.innerWidth, window.innerHeight );
