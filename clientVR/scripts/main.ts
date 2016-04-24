@@ -100,8 +100,8 @@ function init(useMono : bool ) {
     initDeviceOrientation(); 
     
     mesh_menu = new THREE.Mesh(new THREE.PlaneBufferGeometry(4, 4), menu_material);
-    mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5).scale(-1, 1, 1), mouse_material_closed));
-    mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5), mouse_material_closed));
+    mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(0.5, 0.5).scale(-1, 1, 1), mouse_material_closed));
+    mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(0.5, 0.5), mouse_material_closed));
     mouse_positions.push(new THREE.Vector3(5, 0, 0));
     mouse_positions.push(new THREE.Vector3(5, 0, 0));
     socket.on("kinect-mouse", (mouses : MessageMouses) => {
