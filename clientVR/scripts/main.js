@@ -2,7 +2,8 @@
 /// <reference path="../../comm/MessageWorld.ts" />
 define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], function (require, exports, $, io, entityRenderer_1) {
     "use strict";
-    var TODO_debugEndpoint = "192.168.180.126:8090";
+    //var TODO_debugEndpoint = "192.168.180.126:8090";
+    var TODO_debugEndpoint = "192.168.173.103:8090";
     var socket = io.connect(TODO_debugEndpoint);
     var textureLoader = new THREE.TextureLoader();
     var originRotation = 0;
@@ -46,12 +47,13 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         return new THREE.MeshBasicMaterial({
             map: textureLoader.load(url),
             side: THREE.DoubleSide,
-            transparent: true
+            transparent: true,
+            depthWrite: false
         });
         ;
     }
     function init(useMono) {
-        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.8, 11000);
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 11000);
         scene = new THREE.Scene();
         scene.add(backgroundGroup);
         scene.add(entityGroup);

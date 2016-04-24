@@ -8,7 +8,8 @@
 
 import $ = require("jquery");
 import io = require("socket.io-client");
-var TODO_debugEndpoint = "192.168.180.126:8090";
+//var TODO_debugEndpoint = "192.168.180.126:8090";
+var TODO_debugEndpoint = "192.168.173.103:8090";
 var socket: SocketIOClient.Socket = io.connect(TODO_debugEndpoint);
 
 import { createMaterial, DynamicMaterial } from "entityRenderer";
@@ -63,12 +64,13 @@ function materialFromImage(url : string)
     return new THREE.MeshBasicMaterial( {
         map: textureLoader.load( url ),
         side: THREE.DoubleSide,
-        transparent : true
+        transparent : true,
+        depthWrite: false
     } );;
 }
 
 function init(useMono : boolean ) {
-    camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.8, 11000 );
+    camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 11000 );
     scene = new THREE.Scene();
     scene.add(backgroundGroup);
     scene.add(entityGroup);
