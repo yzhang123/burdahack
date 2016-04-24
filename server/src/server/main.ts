@@ -22,6 +22,7 @@ import fs = require("fs");
 import async = require('async');
 import multer = require("multer");
 import Routing = require("./Routing");
+import MyMath = require("./MyMath");
 
 // APP
 var app = express();
@@ -32,6 +33,7 @@ Routing(io, app);
 
 interface State {
 	grabbed: boolean;
+	//lockid: number;
 }
 
 var allViews: { [uid: string]: DeviceView } = { };
@@ -47,40 +49,38 @@ boxState[1] = {grabbed: false};
 boxState[2] = {grabbed: false};
 boxState[3] = {grabbed: false};
 
-function vcos(a: Vector3D, b: Vector3D): number
-{
-	var na: number = Math.sqrt(skalar(a, a));
-	var nb: number = Math.sqrt(skalar(b, b));
-	var cosv: number = skalar(a, b) / (na * nb);
-	return cosv;
-}
-function skalar(a: Vector3D, b: Vector3D): number
-{
-	return (a.x*b.x + a.y*b.y + a.z*b.z);
-}
-function vlength(v: Vector3D): number
-{
-	return Math.sqrt(skalar(v, v));
-}
-function vecdiff(a: Vector3D, b: Vector3D): Vector3D
-{
-	return {x: a.x - b.x, y: a.y - b.y, z: a.z - b.z };
-}
-function mult(a: Vector3D, m: number): Vector3D
-{
-	return {x: a.x*m, y: a.y*m, z: a.z*m};
+
+var lastMouse: any = { };
+
+class HandData {
+	public id: number;
+	public posPrev: Vector3D = null;
+	public posNow: Vector3D = null;
+	public gesturePrev: string;
+	public gestureNow: string;
+
+	public debug(): void
+	{
+		console.log(this.id);
+		if (this.posPrev) console.log("pprv: " + this.posPrev.x + " " + this.posPrev.y + " " + this.posPrev.z);
+		if (this.posNow) console.log("pnow: " + this.posNow.x + " " + this.posNow.y + " " + this.posNow.z);
+		if (this.gesturePrev) console.log("gprev" + this.gesturePrev);
+		if (this.gestureNow) console.log("gnow: " + this.gestureNow);
+	}
 }
 
-var dHand0: Vector3D = null;
-var dHand1: Vector3D = null;
-var gesture0: string;
-var gesture1: string;
+// right, left hand
+var hands: HandData[] = [new HandData(), new HandData()];
+var menuPos: Vector3D = null;
+var currHand: HandData;
+hands[0].id = 0;
+hands[1].id = 1;
 
 // 0 = nothing (leave state as is), 1 = grab, 2 = release-all
 function updateStateGrab(boxid: string, grabAction: number): void
 {
 	var box = boxes[boxid];
-	var hitval: number = vcos(box.pos, dHand0);
+	var hitval: number = MyMath.vcos(box.pos, currHand.posPrev);
 	if (hitval > 0.9 && grabAction == 1)
 		boxState[boxid].grabbed = true;
 
@@ -92,36 +92,80 @@ function update(boxid: string): void
 {
 	if (boxState[boxid].grabbed)
 	{
-		var n: Vector3D = {x: dHand1.x, y: dHand1.y, z: dHand1.z};
-		n = mult(n, 30/vlength(n)); // normalize at 30
+		var n: Vector3D = {x: currHand.posNow.x, y: currHand.posNow.y, z: currHand.posNow.z};
+		n = MyMath.mult(n, 30/MyMath.vlength(n)); // normalize at 30
 		boxes[boxid].pos = n;
-		console.log(vlength(n));
+	}
+
+	if (menuPos) {
+		var diff: Vector3D = MyMath.vecdiff(currHand.posNow, menuPos);
 	}
 }
 
-function handInput(data: any): void
+function transform(data: any): void
 {
-	console.log(data.Gesture + " " + data.DX + " " + data.DY + " " + data.DZ);
-	//console.log(data);
-	console.log(boxes);
-	for (var id in boxes)
-    {	
-    	var dHand = {x: data.DX, y: data.DY, z: data.DZ};
-    	dHand0 = dHand1; dHand1 = dHand;
-    	gesture0 = gesture1; gesture1 = data.Gesture;
+	var p: Vector3D = {x: -data.DZ, y: data.DY, z: data.DX};
+	var len: number = MyMath.vlength(p);
+	if (len > 1) p = MyMath.mult(p, 1/len);
+	
+	data.X = null, data.Y = null, data.Z = null;
 
-    	if (dHand0 && dHand1)
-    	{        	
-        	if (gesture0 != "closed" && gesture1 == "closed") updateStateGrab(id, 1); // grab? grab if grab
-        	if (gesture1 == "open") updateStateGrab(id, 2); // release
-        }
-
-        update(id);
-    }
+	if (MyMath.vlength(p) < 0.1)
+		data.DX = null, data.DY = null, data.DZ = null;
+	else
+		data.DX = p.x, data.DY = p.y, data.DZ = p.z;
 }
+
 
 io.on('connection', socket =>
 {
+	var handInput = (data: any) =>
+	{
+		if (data.Confidence == 'low')
+			return;
+
+		transform(data);
+
+		console.log(data);
+		//console.log(data.Gesture + " " + data.DX + " " + data.DY + " " + data.DZ);
+		//console.log(data);
+		//console.log(boxes);
+
+		var handID: number = 0;
+		if (data.IsLeft) handID = 1;
+
+		lastMouse[handID] = data;
+
+		currHand = hands[handID];
+		var dHand = {x: data.DX, y: data.DY, z: data.DZ};
+		currHand.posPrev = currHand.posNow;
+		currHand.posNow = dHand;
+
+		currHand.gesturePrev = currHand.gestureNow;
+		currHand.gestureNow = data.Gesture;
+
+
+
+		if (!(currHand.posPrev && currHand.posNow)) return;
+
+		for (var id in boxes)
+	    {
+	    	if (currHand.gestureNow == "closed") {
+		    	if (currHand.gesturePrev != "closed")
+		    		updateStateGrab(id, 1); // grab? grab if grab
+		    } else if (currHand.gestureNow == "open") {
+	    		updateStateGrab(id, 2); // release
+	    	} else if (currHand.gestureNow == "lasso") {
+	    		socket.emit("show-menu");
+	    		menuPos = {x: currHand.posNow.x,
+	    				   y: currHand.posNow.y,
+	    				   z: currHand.posNow.z}
+	    	}
+
+	        update(id);
+	    }
+	}
+
     socket.on('update-device-view', (deviceView: DeviceView) =>
     {
         allViews[deviceView.id] = deviceView;
@@ -135,12 +179,14 @@ io.on('connection', socket =>
     {
     	handInput(data);
     });
+   // socket.on('keyword-input', (keyword: string))
 
     setInterval(() => {
     	if (boxes)
 	    	socket.emit('world', boxes);
-	   	if (dHand1)
-	    	socket.emit('kinect-mouse', dHand1);
+	   	if (lastMouse) {
+	    	socket.emit('kinect-mouse', lastMouse);
+	    }
     }, 1000/40);
 });
 
