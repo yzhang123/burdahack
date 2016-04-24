@@ -21,13 +21,14 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
     var entityGroup = new THREE.Group();
     var mesh_mouses = [];
     var mesh_menu;
+    var menu_visible = false;
     var menu_material;
     var cube_material;
     var mouse_material_open;
     var mouse_material_closed;
     var mouse_positions = [];
     var fakeGestureClose = false;
-    init();
+    init(document.location.href.indexOf("mono=1") > -1);
     animate();
     function materialFromImage(url) {
         return new THREE.MeshBasicMaterial({
@@ -37,7 +38,7 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         });
         ;
     }
-    function init() {
+    function init(useMono) {
         camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.8, 11000);
         scene = new THREE.Scene();
         var geometry = new THREE.SphereGeometry(10000, 60, 40);
@@ -53,7 +54,12 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         menu_material = materialFromImage('media/menu1.png');
         renderer = new THREE.WebGLRenderer();
         renderer.setPixelRatio(window.devicePixelRatio);
-        effect = new THREE.StereoEffect(renderer);
+        if (useMono) {
+            effect = new THREE.TrivialEffect(renderer);
+        }
+        else {
+            effect = new THREE.StereoEffect(renderer);
+        }
         //effect = renderer;
         effect.eyeSeparation = 0;
         effect.setSize(window.innerWidth, window.innerHeight);
@@ -91,12 +97,16 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
     }
     // use current right mouse
     function openMenu() {
+        if (menu_visible)
+            return;
         scene.add(mesh_menu);
         mesh_menu.position.set(mouse_positions[1].x, mouse_positions[1].y, mouse_positions[1].z);
         mesh_menu.lookAt(camera.position);
-        setTimeout(closeMenu, 0, 20);
+        menu_visible = true;
+        //xsetTimeout( closeMenu, 0, 5 );
     }
     function closeMenu() {
+        menu_visible = false;
         scene.remove(mesh_menu);
     }
     function updateMouse(mouses) {
