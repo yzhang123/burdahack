@@ -68,7 +68,7 @@ function init(useMono : boolean ) {
     cube_material = createMaterial("<p style='color:red'>HALLO</p>",64,64);
     
     var temp = new DynamicMaterial(512, 512);
-    temp.renderURL("media/entities/test.htm");
+    temp.renderURL("/entity/bubble.html?text=PIMEL");
     cube_material = temp.getMaterial();
     
     menu_material = materialFromImage('media/menu1.png');
