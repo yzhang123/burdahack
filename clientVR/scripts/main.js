@@ -2,8 +2,8 @@
 /// <reference path="../../comm/MessageWorld.ts" />
 define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], function (require, exports, $, io, entityRenderer_1) {
     "use strict";
-    //var TODO_debugEndpoint = "192.168.180.126:8090";
-    var TODO_debugEndpoint = "192.168.173.101:8090";
+    var TODO_debugEndpoint = "192.168.180.126:8090";
+    //var TODO_debugEndpoint = "192.168.173.101:8090";
     var socket = io.connect(TODO_debugEndpoint);
     var textureLoader = new THREE.TextureLoader();
     var originRotation = 0;
@@ -218,7 +218,7 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
             case 2:
                 var v = new THREE.Vector3(event.clientX / container.clientWidth - 0.5, -(event.clientY / container.clientHeight - 0.5), -1);
                 v.applyQuaternion(camera.quaternion);
-                socket.emit("mouse", { DX: v.x, DY: v.y, DZ: v.z, Gesture: fakeGestureClose ? "closed" : "open" });
+                socket.volatile.emit("mouse", { DX: v.x, DY: v.y, DZ: v.z, Gesture: fakeGestureClose ? "closed" : "open" });
                 break;
         }
     }
@@ -243,7 +243,7 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         var v = new THREE.Vector3(0, 0, -1);
         v.applyQuaternion(camera.quaternion);
         if (usingDevice && ++throttle == 3) {
-            socket.emit("head-rot", v);
+            socket.volatile.emit("head-rot", v);
             throttle = 0;
         }
     }
