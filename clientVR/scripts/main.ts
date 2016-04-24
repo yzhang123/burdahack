@@ -53,6 +53,7 @@ function getMaterial(url: string): THREE.MeshBasicMaterial
     if (cached) return cached;
     var mat = new DynamicMaterial();
     mat.renderURL("entity/" + url);
+    console.log(url);
     return materialCache[url] = mat.getMaterial();
 }
 

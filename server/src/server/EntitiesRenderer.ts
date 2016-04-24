@@ -10,7 +10,7 @@ export function renderEntity(type: string, params: any): string
         case "textbox":
             body = 
                 "<span style=\"padding: 20px;\"><span style=\"box-shadow: 0px 0px 20px 0px gray; position: relative; top: 43px; min-width: 256px; padding: 30px 50px 30px 50px; background: linear-gradient(0deg, #aaa, #fff); font-family: sans-serif; font-size: 50px; text-align:center; border-radius: 64px;\">" +
-                params["text"] +
+                (params["text"] || "enter text") +
                 "</span></span>";
             break;
         case "imgbox":

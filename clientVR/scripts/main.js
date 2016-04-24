@@ -39,6 +39,7 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
             return cached;
         var mat = new entityRenderer_1.DynamicMaterial();
         mat.renderURL("entity/" + url);
+        console.log(url);
         return materialCache[url] = mat.getMaterial();
     }
     init(document.location.href.indexOf("mono=1") > -1);
