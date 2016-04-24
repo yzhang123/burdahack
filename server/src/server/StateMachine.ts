@@ -71,4 +71,10 @@ export class StateMachine {
 		if (this.state && (this.state.forceHandID === undefined || this.state.forceHandID == handID))
 			this.state.onHandInput(currHand);
 	}
+
+	public speechInput(word: string): void
+	{
+		if (this.state.speechInput)
+			this.state.speechInput(word);
+	}
 }

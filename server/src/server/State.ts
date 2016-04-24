@@ -5,6 +5,7 @@ interface State {
 	onLeave?: () => void;
 	onHandInput?: (hand: Hand) => void;
 	forceHandID?: number;
+	speechInput?: (word: string) => void;
 };
 
 export = State;

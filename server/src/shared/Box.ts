@@ -13,7 +13,7 @@ export class Box {
 		this.zw = w;
 	}
 
-	public geturl(): string { return "box"; }
+	public geturl(): string { return "textbox?text=Hello"; }
 
 	public feedParams(key: string): void { this.keywords.push(key); } 
 

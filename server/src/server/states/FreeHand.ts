@@ -5,6 +5,7 @@ import MyMath = require("./../MyMath");
 import { Hand } from "./../Hand";
 import State = require("./../State");
 import { StateGrab } from "./StateGrab";
+import { ShowMenu } from "./ShowMenu";
 
 export class FreeHand implements State {
 
@@ -25,15 +26,20 @@ export class FreeHand implements State {
 
 	public onHandInput(currHand: Hand): void
 	{
-		if (currHand.gestureNow != "closed") 
-			return;
-
-		for (var id in this.host.boxes)
+		if (currHand.gestureNow == "closed")
 		{
-			if (this.checkGrab(currHand, id)) {
-				this.host.state = new StateGrab(this.host, this.callbacks, id, this.host.currHandID);
-				break;
+			for (var id in this.host.boxes)
+			{
+				if (this.checkGrab(currHand, id)) {
+					this.host.state = new StateGrab(this.host, this.callbacks, id, this.host.currHandID);
+					break;
+				}
 			}
+		}
+		else if (currHand.gestureNow == "lasso")
+		{
+			this.host.state = new ShowMenu(this.host, this.callbacks,
+				{x: currHand.posNow.x, y: currHand.posNow.y, z: currHand.posNow.z}, this.host.currHandID);
 		}
 	}
 

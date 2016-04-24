@@ -33,6 +33,8 @@ var app = express();
 var server = require("http").createServer(app);
 var io = socketio.listen(server);
 
+var allViews: { [uid: string]: DeviceView } = { };
+
 Routing(io, app);
 
 function createUID(): string
@@ -40,33 +42,6 @@ function createUID(): string
     return "BOX" + new Date().getTime();
 }
 
-interface State {
-	grabbed: boolean;
-	//lockid: number;
-}
-
-var allViews: { [uid: string]: DeviceView } = { };
-var boxes: { [uid: string]: Box } = { };
-var boxState: { [uid: string]: State } = { };
-
-boxes[0] = new Box({x: 30, y: 0, z: 0}, 10);
-boxes[1] = new Box({x: 0, y: 0, z: 30}, 10);
-boxes[2] = new Box({x: 0, y: 0, z: -30}, 10);
-
-boxState[0] = {grabbed: false};
-boxState[1] = {grabbed: false};
-boxState[2] = {grabbed: false};
-
-var lastMouse: any = { };
-
-// right, left hand
-var hands: Hand[] = [new Hand(), new Hand()];
-var menuPos: Vector3D = null;
-var currHand: Hand;
-var editMode: boolean = false;
-var editBoxID: string = null;
-hands[0].id = 0;
-hands[1].id = 1;
 
 
 function transform(data: any): void
@@ -96,6 +71,9 @@ var stateMachine: StateMachine = new StateMachine({
 	},
 	showMenu: () => {
 		io.sockets.emit('show-menu');
+	},
+	hideMenu: () => {
+		io.sockets.emit('hide-menu');
 	}
 });
 
@@ -103,69 +81,6 @@ stateMachine.state = stateMachine.stateFreeHand;
 
 io.on('connection', socket =>
 {
-	function globalUpdate(): void
-	{
-		if (editMode) return;
-
-		if (currHand.gestureNow == "lasso") {
-			socket.broadcast.emit("show-menu", {});
-    		menuPos = {x: currHand.posNow.x,
-    				   y: currHand.posNow.y,
-    				   z: currHand.posNow.z}
-    	}
-	}
-
-	/*
-	function update(boxid: string): void
-	{
-		// edit mode section
-		if (editBoxID && boxes[editBoxID].done())
-		{
-			console.log("NEW BOX");
-			console.log(boxes[editBoxID].keywords);
-			console.log(boxes[editBoxID].pos);
-			editBoxID = null;
-		}
-		//////////////////////
-		if (editMode) return;
-
-		if (boxState[boxid].grabbed)
-		{
-			var n: Vector3D = {x: currHand.posNow.x, y: currHand.posNow.y, z: currHand.posNow.z};
-			var len: number = MyMath.vlength(n);
-			n = MyMath.mult(n, Math.max(10, len*50)/len); // normalize at 30
-
-			boxes[boxid].pos = n;
-		}
-
-		if (menuPos) {
-			var diff: Vector3D = MyMath.vecdiff(currHand.posNow, menuPos);
-			var len = MyMath.vlength(diff);
-
-			if (len > 0.3) {
-				var id = createUID();
-
-				if (diff.y < 0 && Math.abs(diff.y) > Math.abs(diff.x)
-					&& Math.abs(diff.y) > Math.abs(diff.z)) {
-					editMode = false;
-					console.log("A"); // unten
-					boxes[id] = new BoxText(menuPos, 10);
-					boxState[id] = { grabbed: false };
-				} else if (diff.x < 0 && Math.abs(diff.x) > Math.abs(diff.y)
-					&& Math.abs(diff.x) > Math.abs(diff.z)) {
-					editMode = false;
-					console.log("B"); // rechts
-				} else {
-					editMode = false;
-					console.log("C"); // links
-				}
-				socket.broadcast.emit("hide-menu");
-				menuPos = null;
-				console.log("HIDE");
-			}
-		}
-	}*/
-
 	function handInput(data: any)
 	{
 		if (data.Confidence == 'low')
@@ -176,9 +91,9 @@ io.on('connection', socket =>
 		stateMachine.updateHand(data);
 	}
 
-    socket.on('update-device-view', (deviceView: DeviceView) =>
+    socket.on('head-rot', (data: any) =>
     {
-        allViews[deviceView.id] = deviceView;
+        io.sockets.emit('head-rot', data);
     });
 
     socket.on('hand', (data: any) => {
@@ -186,21 +101,22 @@ io.on('connection', socket =>
         handInput(data);
     });
 
-    socket.on('speech-input', (key: string) =>
+    socket.on('keyword', (key: string) =>
     {
-    	if (!editBoxID || boxes[editBoxID].done()) return;
-    	boxes[editBoxID].feedParams(key);
+    	//console.log("ROOT: " + key);
+    	stateMachine.speechInput(key);
     });
 
     socket.on('mouse', (data: any) =>
     {
     	handInput(data);
     });
-   // socket.on('keyword-input', (keyword: string))
+   
 
     setInterval(() => {
+    	
     	stateMachine.update();
-    }, 1000/40);
+    }, 1000/30);
 });
 
 console.log("Running on port: " + confAppPort);
