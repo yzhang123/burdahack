@@ -74,6 +74,7 @@ function init(useMono : boolean ) {
     scene.add(entityGroup);
     scene.add(menuGroup);
     scene.add(cursorGroup);
+    
     var geometry_back = new THREE.SphereGeometry( 10000, 60, 40 );
     geometry_back.scale( - 1, 1, 1 );
     var geometry_front = new THREE.SphereGeometry( 9500, 60, 40 );
@@ -89,7 +90,7 @@ function init(useMono : boolean ) {
     mouse_materials["open"] = materialFromImage( 'media/hand-open.png');
     mouse_materials["closed"] = materialFromImage( 'media/hand-closed.png');
     mouse_materials["lasso"] = materialFromImage( 'media/hand-lasso.png');
-     
+    
     menu_material = materialFromImage('media/menu1.png');
     renderer = new THREE.WebGLRenderer();
     
@@ -121,7 +122,7 @@ function init(useMono : boolean ) {
     controls = new THREE.DeviceOrientationControls( camera );
     initDeviceOrientation();
     
-    mesh_menu = new THREE.Mesh(new THREE.PlaneBufferGeometry(0.8, 0.8), menu_material);
+    mesh_menu = new THREE.Mesh(new THREE.PlaneBufferGeometry(10.8, 10.8), menu_material);
     mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(0.5, 0.5), mouse_materials["closed"]));
     mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(0.5, 0.5).scale(-1, 1, 1), mouse_materials["closed"]));
     mouse_positions.push(new THREE.Vector3(5, 0, 0));
@@ -137,12 +138,21 @@ function init(useMono : boolean ) {
     cursorGroup.add(mesh_mouses[1]);
     
     // fake world
-    var world: MessageWorld = { 0: { pos: { x: 3, y: 0, z: 0 }, xw: 0.5, yw: 0.5, zw: 0.5 } };
+    var world: MessageWorld = { 
+        0: { pos: { x: 20, y: 0, z: 0 }, xw: 0.5, yw: 0.5, url: "textbox?text=test" },
+        1: { pos: { x: 0, y: 0, z: 20 }, xw: 0.5, yw: 0.5, url: "imgbox?url=/media/menu.png" }, 
+        2: { pos: { x: -20, y: 0, z: 0 }, xw: 0.5, yw: 0.5, url: "textbox?text=qweqqweqwe" } 
+    };
     setInterval(() => updateWorld(world), 40);
     socket.on("world", (w: MessageWorld) => world = w);
     socket.on("show-menu", openMenu);
     socket.on("hide-menu", closeMenu);
     //openMenu();
+    
+    if (useMono)
+        socket.on("head-rot", (lookAt: THREE.Vector3) => {
+            camera.lookAt( lookAt );
+        });
 }
 
 // use current right mouse
@@ -171,7 +181,7 @@ function updateMouse(mouses : MessageMouses)
         mousePos.y *= 10;
         mousePos.z *= 10;
         mouse_positions[id] = mousePos;
-        mesh_mouses[id].material = mouse_materials[mouses[id].Gesture];
+        mesh_mouses[id].material = mouse_materials[mouses[id].Gesture] || mesh_mouses[id].material;
         mesh_mouses[id].position.set(mousePos.x, mousePos.y, mousePos.z);
         mesh_mouses[id].lookAt(camera.position);
     }
@@ -186,10 +196,9 @@ function updateWorld(world : MessageWorld)
     {
         var entity = world[id];
         
-        entity.url = "box?text=hallo";
         var mat = getMaterial(entity.url);
         
-        var scale = 0.02;
+        var scale = 0.05;
         var cube: THREE.PlaneBufferGeometry;
         if (!mat.map.image)
             cube = new THREE.PlaneBufferGeometry(entity.xw, entity.yw);
@@ -241,6 +250,16 @@ function onDocumentMouseMove( event : MouseEvent ) {
         case 1:
             lon = ( onMouseDownMouseX - event.clientX ) * 0.1 + onMouseDownLon;
             lat = ( event.clientY - onMouseDownMouseY ) * 0.1 + onMouseDownLat;
+            
+            lat = Math.max( - 85, Math.min( 85, lat ) );
+            phi = THREE.Math.degToRad( 90 - lat );
+            theta = THREE.Math.degToRad( lon - originRotation );
+            var target = new THREE.Vector3( 
+                500 * Math.sin( phi ) * Math.cos( theta ),
+                500 * Math.cos( phi ),
+                500 * Math.sin( phi ) * Math.sin( theta ) 
+            );
+            camera.lookAt( target );
             break;
         case 2: 
             var v = new THREE.Vector3( event.clientX / container.clientWidth - 0.5, -(event.clientY / container.clientHeight - 0.5), -1 );
@@ -265,20 +284,13 @@ function update() {
     {
         controls.update();
     }
-    else
-    {
-        lat = Math.max( - 85, Math.min( 85, lat ) );
-        phi = THREE.Math.degToRad( 90 - lat );
-        theta = THREE.Math.degToRad( lon - originRotation );
-        var target = new THREE.Vector3( 
-            500 * Math.sin( phi ) * Math.cos( theta ),
-            500 * Math.cos( phi ),
-            500 * Math.sin( phi ) * Math.sin( theta ) 
-        );
-        camera.lookAt( target );
-    }
     mesh_back.rotation.y += 0.0001;
     effect.render( scene, camera );
+    
+    var v = new THREE.Vector3( 0, 0, -1 );
+    v.applyQuaternion( camera.quaternion );
+    if (usingDevice)
+        socket.emit("head-rot", v);
 }
 
 

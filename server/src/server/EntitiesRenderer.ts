@@ -5,13 +5,17 @@ export function renderEntity(type: string, params: any): string
     {
         case "undefined":
             body =
-                "";
+                " ";
             break;
-        case "box":
+        case "textbox":
             body = 
-                "<div style=\"background: linear-gradient(0deg, #aaa, #fff); font-family: sans-serif; font-size: 100px; text-align:center; line-height: 256px; width: 512px; height: 256px; border-radius: 64px;\">" +
+                "<span style=\"padding: 20px;\"><span style=\"box-shadow: 0px 0px 20px 0px gray; position: relative; top: 43px; min-width: 256px; padding: 30px 50px 30px 50px; background: linear-gradient(0deg, #aaa, #fff); font-family: sans-serif; font-size: 50px; text-align:center; border-radius: 64px;\">" +
                 params["text"] +
-                "</div>";
+                "</span></span>";
+            break;
+        case "imgbox":
+            body = 
+                "<img style=\"\" src=\"" + params["url"] + "\"></img>";
             break;
         case "text":
             body = 
