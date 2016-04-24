@@ -11,7 +11,7 @@ import io = require("socket.io-client");
 var TODO_debugEndpoint = "192.168.180.126:8090";
 var socket: SocketIOClient.Socket = io.connect(TODO_debugEndpoint);
 
-import { createTexture, createMaterial } from "entityRenderer";
+import { createMaterial, DynamicMaterial } from "entityRenderer";
 
 var textureLoader = new THREE.TextureLoader();
     
