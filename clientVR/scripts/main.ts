@@ -37,7 +37,6 @@ var menu_visible : boolean = false;
 var menu_material : THREE.Material;
 var cube_material : THREE.MeshBasicMaterial;
 var mouse_materials : { [id: string] : THREE.Material } = {};
-var mouse_material_closed : THREE.Material;
 var mouse_positions : THREE.Vector3[] = [];
 var fakeGestureClose = false;
 
@@ -53,7 +52,7 @@ function materialFromImage(url : string)
     } );;
 }
 
-function init(useMono : bool ) {
+function init(useMono : boolean ) {
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.8, 11000 );
     scene = new THREE.Scene();
     var geometry = new THREE.SphereGeometry( 10000, 60, 40 );
@@ -66,7 +65,6 @@ function init(useMono : bool ) {
     mouse_materials["open"] = materialFromImage( 'media/hand-open.png');
     mouse_materials["closed"] = materialFromImage( 'media/hand-closed.png');
     mouse_materials["lasso"] = materialFromImage( 'media/hand-lasso.png');
-    mouse_material_closed = materialFromImage( 'media/hand-closed.png');
     cube_material = createMaterial("<p style='color:red'>HALLO</p>",64,64);
     
     menu_material = materialFromImage('media/menu1.png');
@@ -99,9 +97,9 @@ function init(useMono : bool ) {
     controls = new THREE.DeviceOrientationControls( camera );
     initDeviceOrientation(); 
     
-    mesh_menu = new THREE.Mesh(new THREE.PlaneBufferGeometry(4, 4), menu_material);
-    mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5).scale(-1, 1, 1), mouse_material_closed));
-    mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5), mouse_material_closed));
+    mesh_menu = new THREE.Mesh(new THREE.PlaneBufferGeometry(0.8, 0.8), menu_material);
+    mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5).scale(-1, 1, 1), mouse_materials["closed"]));
+    mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5), mouse_materials["closed"]));
     mouse_positions.push(new THREE.Vector3(5, 0, 0));
     mouse_positions.push(new THREE.Vector3(5, 0, 0));
     socket.on("kinect-mouse", (mouses : MessageMouses) => {

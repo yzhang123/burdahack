@@ -25,7 +25,6 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
     var menu_material;
     var cube_material;
     var mouse_materials = {};
-    var mouse_material_closed;
     var mouse_positions = [];
     var fakeGestureClose = false;
     init(document.location.href.indexOf("mono=1") > -1);
@@ -51,7 +50,6 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         mouse_materials["open"] = materialFromImage('media/hand-open.png');
         mouse_materials["closed"] = materialFromImage('media/hand-closed.png');
         mouse_materials["lasso"] = materialFromImage('media/hand-lasso.png');
-        mouse_material_closed = materialFromImage('media/hand-closed.png');
         cube_material = entityRenderer_1.createMaterial("<p style='color:red'>HALLO</p>", 64, 64);
         menu_material = materialFromImage('media/menu1.png');
         renderer = new THREE.WebGLRenderer();
@@ -79,9 +77,9 @@ define(["require", "exports", "jquery", "socket.io-client", "entityRenderer"], f
         window.addEventListener('resize', onWindowResize, false);
         controls = new THREE.DeviceOrientationControls(camera);
         initDeviceOrientation();
-        mesh_menu = new THREE.Mesh(new THREE.PlaneBufferGeometry(4, 4), menu_material);
-        mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5).scale(-1, 1, 1), mouse_material_closed));
-        mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5), mouse_material_closed));
+        mesh_menu = new THREE.Mesh(new THREE.PlaneBufferGeometry(0.8, 0.8), menu_material);
+        mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5).scale(-1, 1, 1), mouse_materials["closed"]));
+        mesh_mouses.push(new THREE.Mesh(new THREE.PlaneBufferGeometry(2.5, 2.5), mouse_materials["closed"]));
         mouse_positions.push(new THREE.Vector3(5, 0, 0));
         mouse_positions.push(new THREE.Vector3(5, 0, 0));
         socket.on("kinect-mouse", function (mouses) {
