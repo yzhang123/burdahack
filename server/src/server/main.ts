@@ -73,6 +73,7 @@ class HandData {
 var hands: HandData[] = [new HandData(), new HandData()];
 var menuPos: Vector3D = null;
 var currHand: HandData;
+var editMode: boolean = false;
 hands[0].id = 0;
 hands[1].id = 1;
 
@@ -86,20 +87,6 @@ function updateStateGrab(boxid: string, grabAction: number): void
 
 	if (grabAction == 2)
 		boxState[boxid].grabbed = false;
-}
-
-function update(boxid: string): void
-{
-	if (boxState[boxid].grabbed)
-	{
-		var n: Vector3D = {x: currHand.posNow.x, y: currHand.posNow.y, z: currHand.posNow.z};
-		n = MyMath.mult(n, 30/MyMath.vlength(n)); // normalize at 30
-		boxes[boxid].pos = n;
-	}
-
-	if (menuPos) {
-		var diff: Vector3D = MyMath.vecdiff(currHand.posNow, menuPos);
-	}
 }
 
 function transform(data: any): void
@@ -119,17 +106,45 @@ function transform(data: any): void
 
 io.on('connection', socket =>
 {
-	var handInput = (data: any) =>
+	function update(boxid: string): void
+	{
+		if (boxState[boxid].grabbed)
+		{
+			var n: Vector3D = {x: currHand.posNow.x, y: currHand.posNow.y, z: currHand.posNow.z};
+			n = MyMath.mult(n, 30/MyMath.vlength(n)); // normalize at 30
+			boxes[boxid].pos = n;
+		}
+
+		if (menuPos) {
+			var diff: Vector3D = MyMath.vecdiff(currHand.posNow, menuPos);
+			var len = MyMath.vlength(diff);
+
+			if (len > 0.4) {
+				if (diff.y < 0 && Math.abs(diff.y) > Math.abs(diff.x)
+					&& Math.abs(diff.y) > Math.abs(diff.z)) {
+					editMode = false;
+					console.log("A"); // untne
+				} else if (diff.x < 0 && Math.abs(diff.x) > Math.abs(diff.y)
+					&& Math.abs(diff.x) > Math.abs(diff.z)) {
+					editMode = false;
+					console.log("B"); // rechts
+				} else {
+					editMode = false;
+					console.log("C"); // link
+				}
+				socket.broadcast.emit("hide-menu");
+				menuPos = null;
+				console.log("HIDE");
+			}
+		}
+	}
+
+	function handInput(data: any)
 	{
 		if (data.Confidence == 'low')
 			return;
 
 		transform(data);
-
-		console.log(data);
-		//console.log(data.Gesture + " " + data.DX + " " + data.DY + " " + data.DZ);
-		//console.log(data);
-		//console.log(boxes);
 
 		var handID: number = 0;
 		if (data.IsLeft) handID = 1;
@@ -148,6 +163,13 @@ io.on('connection', socket =>
 
 		if (!(currHand.posPrev && currHand.posNow)) return;
 
+		if (currHand.gestureNow == "lasso") {
+			socket.broadcast.emit("show-menu", {});
+    		menuPos = {x: currHand.posNow.x,
+    				   y: currHand.posNow.y,
+    				   z: currHand.posNow.z}
+    	}
+
 		for (var id in boxes)
 	    {
 	    	if (currHand.gestureNow == "closed") {
@@ -155,11 +177,6 @@ io.on('connection', socket =>
 		    		updateStateGrab(id, 1); // grab? grab if grab
 		    } else if (currHand.gestureNow == "open") {
 	    		updateStateGrab(id, 2); // release
-	    	} else if (currHand.gestureNow == "lasso") {
-	    		socket.emit("show-menu");
-	    		menuPos = {x: currHand.posNow.x,
-	    				   y: currHand.posNow.y,
-	    				   z: currHand.posNow.z}
 	    	}
 
 	        update(id);
